@@ -30,7 +30,7 @@ function gerarTokenQR() {
 // Geração e salvamento do QR Code
 async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
-  const url = `http://localhost:5173/qrCode?token=${token}`;
+  const url = `http://localhost:5173/login?token=${token}`;
   
   console.log('URL do QR Code gerado:', url); // <-- aqui o log da URL
 

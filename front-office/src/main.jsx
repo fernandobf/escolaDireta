@@ -1,15 +1,12 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Login from './Login';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App'; // <-- importa o componente App que contém as rotas
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/qrCode" element={<Login />} />
-      </Routes>
+      <App />
     </BrowserRouter>
   </React.StrictMode>
 );
