@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
-// app.use(express.json());
+app.use(express.json());
 app.use(cors());
 app.use('/back-end', express.static(path.join(__dirname, '.'))); 
 /*app.use(cors({
@@ -38,7 +38,7 @@ async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
   const url = `https://front-office-5ifz.onrender.com/login?token=${token}`;
   
-  console.log('URL do QR Code gerado:', url); // <-- aqui o log da URL
+  console.warn('URL do QR Code gerado:', url); // <-- aqui o log da URL
 
   const qrImageBuffer = await QRCode.toBuffer(url);
   fs.writeFileSync('./qrcode.png', qrImageBuffer);
@@ -58,7 +58,7 @@ gerarQRCodeDoDia();
 app.post('/api/validate-token', (req, res) => {
   const { token } = req.body;
   try {
-    const decoded = jwt.verify(token, process.env.SECRET);
+    const decoded = jwt.verify(token, prsocess.env.SECRET);
     res.json({ valid: true, clientId: decoded.clientId });
   } catch (err) {
     res.status(401).json({ valid: false, error: 'Token inválido ou expirado' });

@@ -13,44 +13,43 @@ function Login() {
 
   const token = searchParams.get("token");
 
-useEffect(() => {
-  const savedPhone = localStorage.getItem("savedPhone");
-  const savedAlunos = localStorage.getItem("alunos");
+  useEffect(() => {
+    const savedPhone = localStorage.getItem("savedPhone");
+    const savedAlunos = localStorage.getItem("alunos");
 
-  if (savedPhone && savedAlunos) {
-    navigate("/students", { replace: true });
-    return;
-  }
+    if (savedPhone && savedAlunos) {
+      navigate("/students", { replace: true });
+      return;
+    }
 
-  if (!token) {
-    setError("Acesso não autorizado. Use um QR Code válido.");
-    setLoading(false);
-    return;
-  }
+    if (!token) {
+      setError("Acesso não autorizado. Use um QR Code válido.");
+      setLoading(false);
+      return;
+    }
 
-  fetch("https://back-end-2vzw.onrender.com/api/validate-token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ token }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (!data.valid) {
-        setError("Token inválido ou expirado.");
-      } else {
-        console.log("✅ Token válido para:", data.clientId);
-        // Redireciona para a área protegida imediatamente após validação
-        navigate("/students", { replace: true });
-      }
+    // Novo fetch: POST para seu backend Express
+    fetch("https://back-end-2vzw.onrender.com/api/validate-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
     })
-    .catch(() => {
-      setError("Erro ao validar token.");
-    })
-    .finally(() => setLoading(false));
-}, [navigate, token]);
-
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.valid) {
+          setError("Token inválido ou expirado.");
+        } else {
+          // você pode preencher com o clientId ou apenas liberar acesso
+          console.log("✅ Token válido para:", data.clientId);
+        }
+      })
+      .catch(() => {
+        setError("Erro ao validar token.");
+      })
+      .finally(() => setLoading(false));
+  }, [navigate, token]);
 
 
   const validatePhone = (num: string) => /^351\d{9}$/.test(num);
