@@ -8,7 +8,7 @@ function Login() {
   const [searchParams] = useSearchParams();
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true); // já começa como true
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const token = searchParams.get("token");
@@ -28,12 +28,11 @@ function Login() {
       return;
     }
 
-    // Novo fetch: POST para seu backend Express
     fetch("https://back-end-2vzw.onrender.com/api/validate-token", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => res.json())
@@ -41,7 +40,6 @@ function Login() {
         if (!data.valid) {
           setError("Token inválido ou expirado.");
         } else {
-          // você pode preencher com o clientId ou apenas liberar acesso
           console.log("✅ Token válido para:", data.clientId);
         }
       })
@@ -50,7 +48,6 @@ function Login() {
       })
       .finally(() => setLoading(false));
   }, [navigate, token]);
-
 
   const validatePhone = (num: string) => /^351\d{9}$/.test(num);
 
@@ -91,17 +88,25 @@ function Login() {
         ) : error ? (
           <p className="error-message">{error}</p>
         ) : (
-          <>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin();
+            }}
+          >
             <input
               type="number"
               placeholder="(ex: 351910000001)"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              className="no-spinner"
+              autoFocus
+              inputMode="numeric"
             />
-            <button onClick={handleLogin} disabled={loading}>
+            <button type="submit" disabled={loading}>
               {loading ? "Carregando..." : "Entrar"}
             </button>
-          </>
+          </form>
         )}
       </div>
     </div>

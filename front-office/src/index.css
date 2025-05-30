@@ -154,6 +154,17 @@ input[type="number"] {
   font-size: 14px;
 }
 
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+
 input[type="text"]:focus {
   outline: none;
   border-color: #646cff;
