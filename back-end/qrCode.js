@@ -6,6 +6,7 @@ import cron from 'node-cron';
 import QRCode from 'qrcode';
 import fs from 'fs';
 import cors from 'cors';
+import path from 'path';
 
 dotenv.config();
 const app = express();
@@ -31,7 +32,7 @@ function gerarTokenQR() {
 // Geração e salvamento do QR Code
 async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
-  const url = `http://localhost:5173/login?token=${token}`;
+  const url = `https://front-office-5ifz.onrender.com/login?token=${token}`;
   
   console.log('URL do QR Code gerado:', url); // <-- aqui o log da URL
 
