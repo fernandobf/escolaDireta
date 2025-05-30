@@ -56,7 +56,13 @@ gerarQRCodeDoDia();
 
 // Endpoint para validação do token
 app.post('/api/validate-token', (req, res) => {
-  const { token } = req.body;
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '');
+
+  if (!token) {
+    return res.status(401).json({ valid: false, error: 'Token não fornecido' });
+  }
+
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
     res.json({ valid: true, clientId: decoded.clientId });
@@ -64,5 +70,6 @@ app.post('/api/validate-token', (req, res) => {
     res.status(401).json({ valid: false, error: 'Token inválido ou expirado' });
   }
 });
+
 
 app.listen(3001, () => console.log('Backend rodando na porta 3001'));
