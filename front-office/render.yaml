@@ -3,8 +3,8 @@ services:
     name: front-office
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
-    startCommand: npm run preview
+    buildCommand: cd front-office && npm install && npm run build
+    startCommand: cd front-office && npm run preview
     branch: main
     envVars:
       - key: NODE_ENV
