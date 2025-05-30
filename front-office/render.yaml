@@ -1,10 +1,9 @@
 services:
-  - type: web
+  - type: static
     name: front-office
-    env: node
     plan: starter
     buildCommand: cd front-office && npm install && npm run build
-    startCommand: cd front-office && npm run preview
+    publishPath: front-office/dist
     branch: main
     envVars:
       - key: NODE_ENV
