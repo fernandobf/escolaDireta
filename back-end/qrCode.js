@@ -1,4 +1,3 @@
-
 import express from 'express';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
@@ -16,45 +15,45 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use('/back-end', express.static(path.join(__dirname, '.'))); 
-/*app.use(cors({
-  origin: 'http://localhost:5173'  // Permite só o frontend dessa origem
-}));*/
+app.use('/back-end', express.static(path.join(__dirname, '.')));
 
+// Variável para armazenar o token do dia
+let dailyToken = "";
 
-// Geração do token JWT
+// Função para gerar o token JWT
 function gerarTokenQR() {
   const payload = {
     clientId: 'c1',
     type: 'loginQR',
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // 24h
   };
   return jwt.sign(payload, process.env.SECRET);
 }
 
-// Geração e salvamento do QR Code
+// Função para gerar e salvar o QR Code
 async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
+  dailyToken = token; // Salva o token atual
+
   const url = `https://front-office-5ifz.onrender.com/login?token=${token}`;
-  
-  console.warn('URL do QR Code gerado:', url); // <-- aqui o log da URL
+  console.warn('URL do QR Code gerado:', url);
 
   const qrImageBuffer = await QRCode.toBuffer(url);
   fs.writeFileSync('./qrcode.png', qrImageBuffer);
   console.log('✅ QR Code do dia gerado');
 }
 
-// Agendamento para rodar às 7h de segunda a sexta
+// Agendamento diário para rodar às 07h de segunda a sexta
 cron.schedule('0 7 * * 1-5', () => {
   console.log('⏰ Executando agendamento de QR Code...');
   gerarQRCodeDoDia();
 });
 
-// Executa ao iniciar também
+// Executa ao iniciar o servidor
 gerarQRCodeDoDia();
 
-// Endpoint para validação do token
+// Endpoint para validar o token recebido do frontend
 app.post('/api/validate-token', (req, res) => {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace('Bearer ', '');
@@ -65,11 +64,16 @@ app.post('/api/validate-token', (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
+
+    // Apenas o token atual é aceito
+    if (token !== dailyToken) {
+      return res.status(403).json({ valid: false, error: 'Token inválido ou não autorizado' });
+    }
+
     res.json({ valid: true, clientId: decoded.clientId });
   } catch (err) {
-    res.status(401).json({ valid: false, error: 'Token inválido ou expirado' });
+    res.status(401).json({ valid: false, error: 'Token expirado ou malformado' });
   }
 });
 
-
-app.listen(3001, () => console.log('Backend rodando na porta 3001'));
+app.listen(3001, () => console.log('✅ Backend rodando na porta 3001'));
