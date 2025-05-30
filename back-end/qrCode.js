@@ -58,7 +58,7 @@ gerarQRCodeDoDia();
 app.post('/api/validate-token', (req, res) => {
   const { token } = req.body;
   try {
-    const decoded = jwt.verify(token, prsocess.env.SECRET);
+    const decoded = jwt.verify(token, process.env.SECRET);
     res.json({ valid: true, clientId: decoded.clientId });
   } catch (err) {
     res.status(401).json({ valid: false, error: 'Token inválido ou expirado' });
