@@ -9,8 +9,9 @@ import cors from 'cors';
 
 dotenv.config();
 const app = express();
-app.use(express.json());
+// app.use(express.json());
 // app.use(cors());
+app.use('/back-end', express.static(path.join(__dirname, '.'))); 
 app.use(cors({
   origin: 'http://localhost:5173'  // Permite só o frontend dessa origem
 }));
