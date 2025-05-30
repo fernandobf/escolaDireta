@@ -29,7 +29,7 @@ function Login() {
     }
 
     // Novo fetch: POST para seu backend Express
-    fetch("http://localhost:3001/api/validate-token", {
+    fetch("https://back-end-2vzw.onrender.com/api/validate-token", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

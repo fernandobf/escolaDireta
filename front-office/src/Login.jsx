@@ -10,7 +10,7 @@ function Login() {
     const token = queryParams.get('token');
     if (!token) return setStatus('error');
 
-    fetch('http://localhost:3001/api/validate-token', {
+    fetch('https://back-end-2vzw.onrender.com/api/validate-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })
