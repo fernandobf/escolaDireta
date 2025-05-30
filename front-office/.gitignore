@@ -1,0 +1,36 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# MacOS system files
+.DS_Store
+
+# Vscode settings
+.vscode/
+
+# Test coverage
+coverage/
+
+# Optional npm cache folder
+.npm/
+
+# Optional eslint cache
+.eslintcache
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
