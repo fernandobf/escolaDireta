@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: front-office
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    branch: main
+    envVars:
+      - key: NODE_ENV
+        value: production
