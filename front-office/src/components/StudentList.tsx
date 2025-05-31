@@ -1,276 +1,158 @@
 import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 
+interface Aluno {
+  student_id: number;
+  student_name: string;
+  spot_name: string;
+  caregiver_name: string;
+}
+
+interface LogEntry {
+  student_id: number;
+  log_status: string;
+  log_timestamp: string;
+}
+
 function StudentList() {
-  const [alunos, setAlunos] = useState<any[]>([]);
-  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
-  const [logs, setLogs] = useState<any[]>([]);
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set());
   const [btnTxt, setBtnTxt] = useState("Solicitar Checkout");
-  const [countdowns, setCountdowns] = useState<{ [key: string]: number }>({});
+  const [logs, setLogs] = useState<LogEntry[]>([]);
 
   useEffect(() => {
     const storedAlunos = localStorage.getItem("alunos");
     if (storedAlunos) {
       setAlunos(JSON.parse(storedAlunos));
     }
+
+    fetch("http://localhost:3000/api/logs/current")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setLogs(data);
+        } else {
+          console.error("Resposta inesperada dos logs:", data);
+          setLogs([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar logs:", err);
+        setLogs([]);
+      });
   }, []);
 
-  const generateStudentId = (aluno: any, index: number) => {
-    return aluno.id || `${aluno.student_name}-${aluno.student_class}-${index}`;
+  const getStatusForStudent = (id: number): string | null => {
+    const entry = logs.find((log) => log.student_id === id);
+    return entry?.log_status ?? null;
+  };
+
+  const isStudentSelectable = (id: number): boolean => {
+    const status = getStatusForStudent(id);
+    return status === null || status === "Não iniciado";
   };
 
   const handleSelectAll = () => {
-    const selectableStudents = alunos.filter((aluno) => !isLocked(getLogForStudent(aluno)));
-    if (selectedStudents.size === selectableStudents.length) {
+    const selectable = alunos
+      .filter((a) => isStudentSelectable(a.student_id))
+      .map((a) => a.student_id);
+
+    if (selectedStudents.size === selectable.length) {
       setSelectedStudents(new Set());
     } else {
-      const allIds = new Set(
-        selectableStudents.map((aluno, index) => generateStudentId(aluno, index))
-      );
-      setSelectedStudents(allIds);
+      setSelectedStudents(new Set(selectable));
     }
   };
 
-  const handleSelectIndividual = (aluno: any, index: number) => {
-    const newSelectedStudents = new Set(selectedStudents);
-    const studentId = generateStudentId(aluno, index);
-    if (newSelectedStudents.has(studentId)) {
-      newSelectedStudents.delete(studentId);
-    } else {
-      newSelectedStudents.add(studentId);
-    }
-    setSelectedStudents(newSelectedStudents);
-  };
-
-  const fetchLogs = async () => {
-    try {
-      const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzXbl0HQ9NfsskL3fxz_-QUeBAyxeh85GblPpPN6aObkqjmu_gadjzb2yJS22CUDTYL/exec?act=class"
-      );
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        // Só atualiza logs se houver mudança real
-        const isDifferent =
-          data.length !== logs.length ||
-          data.some((item: any, i: number) => {
-            const log = logs[i];
-            return (
-              !log ||
-              log.log_student_name !== item.log_student_name ||
-              log.log_student_class !== item.log_student_class ||
-              log.log_timestamp !== item.log_timestamp ||
-              log.log_status !== item.log_status
-            );
-          });
-
-        if (isDifferent) {
-          setLogs(data);
-        }
-      } else {
-        console.warn("Resposta inesperada:", data);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar logs:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
-    return () => clearInterval(interval);
-  }, []); // roda só uma vez no mount
-
-  const getLogForStudent = (aluno: any) => {
-    return logs.find(
-      (log) =>
-        log.log_student_name === aluno.student_name &&
-        log.log_student_class === aluno.student_class
-    );
-  };
-
-  const isLocked = (log: any) => {
-    if (!log || !log.log_timestamp) return false;
-    const logTime = new Date(log.log_timestamp);
-    const now = new Date();
-    const diffInMinutes = (now.getTime() - logTime.getTime()) / 1000 / 60;
-    return (log.log_status === "Iniciado" || log.log_status === "Em processamento") && diffInMinutes < 60;
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newCountdowns: { [key: string]: number } = {};
-      alunos.forEach((aluno, index) => {
-        const log = getLogForStudent(aluno);
-        const studentId = generateStudentId(aluno, index);
-        if (log && isLocked(log)) {
-          const logTime = new Date(log.log_timestamp);
-          const now = new Date();
-          const diff = 60 * 60 * 1000 - (now.getTime() - logTime.getTime());
-          newCountdowns[studentId] = Math.max(0, Math.floor(diff / 1000));
-        }
-      });
-
-      // Verifica se mudou para evitar atualizações desnecessárias
-      const hasChanged =
-        Object.keys(newCountdowns).length !== Object.keys(countdowns).length ||
-        Object.keys(newCountdowns).some((key) => newCountdowns[key] !== countdowns[key]);
-
-      if (hasChanged) {
-        setCountdowns(newCountdowns);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [alunos, logs, countdowns]);
-
-  const formatTime = (seconds: number) => {
-    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    return `${m}:${s}`;
+  const handleSelectIndividual = (id: number) => {
+    if (!isStudentSelectable(id)) return;
+    const updated = new Set(selectedStudents);
+    updated.has(id) ? updated.delete(id) : updated.add(id);
+    setSelectedStudents(updated);
   };
 
   const handleCheckout = async () => {
-    flushSync(() => setBtnTxt("Aguarde...."));
+    flushSync(() => setBtnTxt("Aguarde..."));
 
-    if (selectedStudents.size === 0) return;
-
-    const studentsToLog = alunos
-      .map((aluno, index) => ({ aluno, index }))
-      .filter(({ aluno, index }) => selectedStudents.has(generateStudentId(aluno, index)));
-
-    const url = "https://cors-anywhere.herokuapp.com/https://script.google.com/macros/s/AKfycbzXbl0HQ9NfsskL3fxz_-QUeBAyxeh85GblPpPN6aObkqjmu_gadjzb2yJS22CUDTYL/exec?act=start_process";
+    const caregiver = JSON.parse(localStorage.getItem("responsavel") || "{}");
+    const payload = {
+      caregiver_id: caregiver.id,
+      students: Array.from(selectedStudents),
+    };
 
     try {
-      await Promise.all(
-        studentsToLog.map(async ({ aluno }) => {
-          const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              studentName: aluno.student_name,
-              tutorName: aluno.student_tutor_name,
-              studentClass: aluno.student_class,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Erro ao registrar aluno: ${aluno.student_name}`);
-          }
-        })
-      );
-
-      flushSync(() => {
-        const updatedSelected = new Set(selectedStudents);
-        studentsToLog.forEach(({ aluno, index }) => {
-          const id = generateStudentId(aluno, index);
-          updatedSelected.delete(id);
-        });
-        setSelectedStudents(updatedSelected);
+      const res = await fetch("http://localhost:3000/api/logs/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      alert("Checkout solicitado com sucesso!");
-    } catch (error) {
-      console.error("Erro ao registrar checkout:", error);
-      alert("Houve um erro ao processar o checkout.");
+      if (!res.ok) throw new Error("Erro no envio");
+
+      alert("Solicitação enviada com sucesso!");
+      setSelectedStudents(new Set());
+
+      const updatedLogs = await fetch("http://localhost:3000/api/logs/current").then((r) => r.json());
+      setLogs(updatedLogs);
+    } catch (err) {
+      alert("Erro ao solicitar checkout.");
+      console.error(err);
     } finally {
       setBtnTxt("Solicitar Checkout");
     }
   };
 
-  const isAllSelected =
-    selectedStudents.size ===
-    alunos.filter((aluno) => !isLocked(getLogForStudent(aluno))).length;
-
-  const allStudentsLocked =
-    alunos.length > 0 && alunos.every((aluno) => isLocked(getLogForStudent(aluno)));
+  const isCheckoutAllowed = alunos.some(
+    (a) => isStudentSelectable(a.student_id) && selectedStudents.has(a.student_id)
+  );
 
   return (
     <div className="content internal">
-      <div>
-        {alunos[0] && alunos[0].student_tutor_name && (
-          <h2>
-            Olá, <b>{alunos[0].student_tutor_name}</b>.
-          </h2>
-        )}
-      </div>
+      {alunos[0] && (
+        <h2>
+          Olá, <b>{alunos[0].caregiver_name}</b>
+        </h2>
+      )}
 
       <h3>Aluno(s):</h3>
 
       {alunos.length > 1 && (
-        <button
-          className="btn-list"
-          onClick={handleSelectAll}
-          style={{
-            padding: "0.5rem",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-          }}
-        >
-          {isAllSelected ? "Desmarcar Todos" : "Marcar Todos"}
+        <button onClick={handleSelectAll} className="btn-list">
+          {selectedStudents.size === alunos.filter(a => isStudentSelectable(a.student_id)).length
+            ? "Desmarcar Todos"
+            : "Marcar Todos"}
         </button>
       )}
 
-      {alunos.length > 0 ? (
-        alunos.map((aluno, index) => {
-          const studentId = generateStudentId(aluno, index);
-          const log = getLogForStudent(aluno);
-          const status = log?.log_status || "Não iniciado";
-          const locked = isLocked(log);
-          const isCompleted = status === "Concluído";
-          const disabled = locked || isCompleted;
+      {alunos.map((aluno) => {
+        const status = getStatusForStudent(aluno.student_id) || "Não iniciado";
+        const isDisabled = !isStudentSelectable(aluno.student_id);
 
-          return (
-            <div
-              key={`${studentId}-${getLogForStudent(aluno)?.log_status || 'na'}`}
-              className={`btn-box ${selectedStudents.has(studentId) ? "box-active" : ""}`}
-              style={{
-                cursor: disabled ? "not-allowed" : "pointer",
-                opacity: disabled ? 0.45 : 1,
-              }}
-              onClick={() => !disabled && handleSelectIndividual(aluno, index)}
-            >
-              <p><strong>Nome:</strong> {aluno.student_name}</p>
-              <p><strong>Turma:</strong> {aluno.student_class}</p>
-              <p>
-                <strong>Status:</strong>{" "}
-                <span
-                  className="status"
-                  style={{
-                    color: status === "Não iniciado" ? "#333" : "#fff",
-                    backgroundColor:
-                      status === "Em processamento"
-                        ? "green"
-                        : status === "Iniciado"
-                        ? "#836d0c"
-                        : status === "Concluído"
-                        ? "red"
-                        : "inherit",
-                  }}
-                >
-                  &nbsp;{status}&nbsp;
-                </span>
-              </p>
-              {locked && (
-                <p style={{ fontSize: "0.9rem", color: "#666" }}>
-                  Aguarde <strong>{formatTime(countdowns[studentId] || 0)}</strong> min para nova solicitação.
-                </p>
-              )}
-            </div>
-          );
-        })
-      ) : (
-        <p>Nenhum aluno encontrado.</p>
-      )}
+        return (
+          <div
+            key={aluno.student_id}
+            onClick={() => handleSelectIndividual(aluno.student_id)}
+            className={`btn-box ${selectedStudents.has(aluno.student_id) ? "box-active" : ""} ${isDisabled ? "box-disabled" : ""}`}
+            style={{
+              opacity: isDisabled ? 0.5 : 1,
+              cursor: isDisabled ? "not-allowed" : "pointer",
+            }}
+          >
+            <p><strong>Nome:</strong> {aluno.student_name}</p>
+            <p><strong>Turma:</strong> {aluno.spot_name}</p>
+            <p><strong>Status:</strong> {status}</p>
+          </div>
+        );
+      })}
 
       <button
         onClick={handleCheckout}
-        disabled={selectedStudents.size === 0 || allStudentsLocked || btnTxt === "Aguarde...."}
+        disabled={!isCheckoutAllowed}
         className="btn-list"
         style={{
-          color: selectedStudents.size > 0 && !allStudentsLocked ? "#000" : "#fff",
-          backgroundColor: selectedStudents.size > 0 && !allStudentsLocked ? "#f26729" : "#ccc",
-          cursor: selectedStudents.size > 0 && !allStudentsLocked ? "pointer" : "not-allowed",
+          backgroundColor: isCheckoutAllowed ? "#f26729" : "#ccc",
+          color: isCheckoutAllowed ? "#000" : "#fff",
+          cursor: isCheckoutAllowed ? "pointer" : "not-allowed",
         }}
       >
         {btnTxt}

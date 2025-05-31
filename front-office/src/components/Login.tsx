@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-const BACKEND_URL =
-  "https://script.google.com/macros/s/AKfycbzXbl0HQ9NfsskL3fxz_-QUeBAyxeh85GblPpPN6aObkqjmu_gadjzb2yJS22CUDTYL/exec";
+//const BACKEND_URL = "https://back-end-2vzw.onrender.com/api";
+const BACKEND_URL = "http://localhost:3000/api";
 
 function Login() {
   const [searchParams] = useSearchParams();
@@ -28,7 +28,7 @@ function Login() {
       return;
     }
 
-    fetch("https://back-end-2vzw.onrender.com/api/validate-token", {
+    fetch(`${BACKEND_URL}/validate-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -61,18 +61,38 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${BACKEND_URL}?act=login&phone=${phone}`);
+      const res = await fetch(`${BACKEND_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone }),
+      });
+
       const data = await res.json();
 
-      if (data.alunos?.length > 0) {
-        localStorage.setItem("savedPhone", phone);
-        localStorage.setItem("alunos", JSON.stringify(data.alunos));
-        navigate("/students", { replace: true });
+      if (data.students?.length > 0) {
+  const caregiverName = data.caregiver_name;
+  const caregiverId = data.caregiver_id;
+
+  // Mapeia os alunos adicionando os campos esperados
+  const alunos = data.students.map((student: any) => ({
+    student_id: student.student_id,
+    student_name: student.student_name_official,
+    spot_name: student.spot_name_official,
+    caregiver_name: caregiverName,
+  }));
+
+  localStorage.setItem("savedPhone", phone);
+  localStorage.setItem("alunos", JSON.stringify(alunos));
+  localStorage.setItem("responsavel", JSON.stringify({ id: caregiverId, nome: caregiverName }));
+
+  navigate("/students", { replace: true });
       } else {
-        setError("Nenhum aluno encontrado.");
+        setError("Nenhum aluno encontrado para este responsável.");
       }
     } catch (err) {
-      setError("Erro ao conectar.");
+      setError("Erro ao conectar com o servidor.");
     } finally {
       setLoading(false);
     }
