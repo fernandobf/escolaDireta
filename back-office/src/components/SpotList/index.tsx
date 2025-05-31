@@ -44,11 +44,11 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
             new Date(b.log_timestamp).getTime() - new Date(a.log_timestamp).getTime()
         );
 
-        const newLogs = sorted.filter(
+        /*const newLogs = sorted.filter(
           (log) =>
             !prevLogIdsRef.current.has(log.log_id) &&
             log.log_student_class.toLowerCase() === currentClassParam
-        );
+        );*/
 
         prevLogIdsRef.current = new Set(sorted.map((log) => log.log_id));
         setLogs(sorted);
