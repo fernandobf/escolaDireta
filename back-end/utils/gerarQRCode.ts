@@ -39,9 +39,11 @@ export function carregarTokenDoArquivo() {
     const tokenPath = path.join(process.cwd(), "token.json");
     const salvo = fs.readFileSync(tokenPath, "utf-8");
     const token = JSON.parse(salvo).token;
+    const url = `https://front-office-5ifz.onrender.com/login?token=${encodeURIComponent(dailyToken)}`;
 
     jwt.verify(token, process.env.SECRET || "fallback_secret");
     dailyToken = token;
+    console.warn("🟡 [QR] URL do token carregado:", url); // ← AQUI
     console.log("📦 Token válido carregado do disco.");
   } catch {
     console.warn("⚠️ Token ausente ou inválido. Gerando novo...");
