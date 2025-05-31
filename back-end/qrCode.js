@@ -1,17 +1,17 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
-import cron from 'node-cron';
-import QRCode from 'qrcode';
-import fs from 'fs';
-import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const express = require('express');
+const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
+const cron = require('node-cron');
+const QRCode = require('qrcode');
+const fs = require('fs');
+const cors = require('cors');
+const path = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Em CommonJS, usamos __dirname diretamente (sem fileURLToPath)
+const __dirname = __dirname;
 
 dotenv.config();
+
 const app = express();
 app.use(express.json());
 app.use(cors());
