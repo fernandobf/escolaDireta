@@ -1,17 +1,17 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const jwt = require('jsonwebtoken');
-const cron = require('node-cron');
-const QRCode = require('qrcode');
-const fs = require('fs');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+import cron from 'node-cron';
+import QRCode from 'qrcode';
+import fs from 'fs';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Em CommonJS, usamos __dirname diretamente (sem fileURLToPath)
-const __dirname = __dirname;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
-
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -36,7 +36,7 @@ async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
   dailyToken = token; // Salva o token atual
 
-  const url = `https://front-office-5ifz.onrender.com/login?token=${token}`;
+  const url = https://front-office-5ifz.onrender.com/login?token=${token};
   console.warn('URL do QR Code gerado:', url);
 
   const qrImageBuffer = await QRCode.toBuffer(url);
