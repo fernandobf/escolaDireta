@@ -13,22 +13,24 @@ import logsRoutes from "./routes/logs";
 
 dotenv.config();
 
-const __dirname = path.resolve(); // ← substituto compatível com CommonJS
-
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Rotas da API
 app.use("/api", authRoutes);
 app.use("/api/logs", logsRoutes);
 
 // Variável global do token
 let dailyToken = "";
 
+// Garante caminho absoluto à raiz do projeto
+const basePath = path.resolve(__dirname);
+
 // Carrega token do disco (caso exista)
 function carregarTokenDoArquivo() {
   try {
-    const salvo = fs.readFileSync(path.join(__dirname, "token.json"), "utf-8");
+    const salvo = fs.readFileSync(path.join(basePath, "token.json"), "utf-8");
     dailyToken = JSON.parse(salvo).token;
     console.log("📦 Token carregado do disco.");
   } catch {
@@ -36,6 +38,7 @@ function carregarTokenDoArquivo() {
   }
 }
 
+// Gera novo token
 function gerarTokenQR(): string {
   const payload = {
     clientId: "c1",
@@ -46,6 +49,7 @@ function gerarTokenQR(): string {
   return jwt.sign(payload, process.env.SECRET || "fallback_secret");
 }
 
+// Gera QR code e salva o token
 async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
   dailyToken = token;
@@ -54,15 +58,18 @@ async function gerarQRCodeDoDia() {
   console.log("🔗 URL do QR Code:", url);
 
   const qrImageBuffer = await QRCode.toBuffer(url);
-  fs.writeFileSync(path.join(__dirname, "qrcode.png"), qrImageBuffer);
-  fs.writeFileSync(path.join(__dirname, "token.json"), JSON.stringify({ token }));
+  fs.writeFileSync(path.join(basePath, "qrcode.png"), qrImageBuffer);
+  fs.writeFileSync(path.join(basePath, "token.json"), JSON.stringify({ token }));
 
   console.log("✅ QR Code e token gerados.");
 }
 
-// Exposição da imagem via rota
+// Endpoint para validar token (caso queira reutilizar depois)
+// app.post("/api/validate-token", (req, res) => { ... });
+
+// Exibe a imagem do QR Code
 app.get("/back-end/qrcode.png", (req, res) => {
-  const filePath = path.join(__dirname, "qrcode.png");
+  const filePath = path.join(basePath, "qrcode.png");
   if (fs.existsSync(filePath)) {
     res.sendFile(filePath);
   } else {
@@ -70,10 +77,11 @@ app.get("/back-end/qrcode.png", (req, res) => {
   }
 });
 
-// Inicialização
+// Inicialização imediata
 carregarTokenDoArquivo();
 gerarQRCodeDoDia();
 
+// Agenda: segunda a sexta às 7h
 cron.schedule("0 7 * * 1-5", () => {
   console.log("⏰ Gerando novo QR Code...");
   gerarQRCodeDoDia();
