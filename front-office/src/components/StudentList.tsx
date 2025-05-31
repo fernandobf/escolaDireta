@@ -26,7 +26,7 @@ function StudentList() {
       setAlunos(JSON.parse(storedAlunos));
     }
 
-    fetch("http://localhost:3000/api/logs/current")
+    fetch("https://back-end-2vzw.onrender.com/api/logs/current")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -81,7 +81,7 @@ function StudentList() {
     };
 
     try {
-      const res = await fetch("http://localhost:3000/api/logs/start", {
+      const res = await fetch("https://back-end-2vzw.onrender.com/api/logs/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -92,7 +92,7 @@ function StudentList() {
       alert("Solicitação enviada com sucesso!");
       setSelectedStudents(new Set());
 
-      const updatedLogs = await fetch("http://localhost:3000/api/logs/current").then((r) => r.json());
+      const updatedLogs = await fetch("https://back-end-2vzw.onrender.com/api/logs/current").then((r) => r.json());
       setLogs(updatedLogs);
     } catch (err) {
       alert("Erro ao solicitar checkout.");
