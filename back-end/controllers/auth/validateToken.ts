@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { dailyToken } from "../../utils/gerarQRCode";
+import { getDailyToken } from "../../utils/gerarQRCode";
 
 export default async function validateToken(req: Request, res: Response): Promise<void> {
   const authHeader = req.headers.authorization;
@@ -13,8 +13,9 @@ export default async function validateToken(req: Request, res: Response): Promis
   const token = authHeader.split(" ")[1];
 
   try {
-    // Verifica se é igual ao token atual
-    if (token !== dailyToken) {
+    const currentToken = getDailyToken();
+
+    if (token !== currentToken) {
       res.status(403).json({ valid: false, message: "Token inválido ou desatualizado." });
       return;
     }
