@@ -36,7 +36,7 @@ async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
   dailyToken = token; // Salva o token atual
 
-const url = `https://front-office-5ifz.onrender.com/login?token=${token}`;
+const url = `https://front-office-5ifz.onrender.com/login?token=${encodeURIComponent(token)}`;
   console.warn('URL do QR Code gerado:', url);
 
   const qrImageBuffer = await QRCode.toBuffer(url);
