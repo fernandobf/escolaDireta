@@ -36,6 +36,7 @@ app.get("/back-end/qrcode.png", (req, res) => {
 
 // Inicialização segura
 carregarTokenDoArquivo(); // já gera novo se necessário
+// gerarQRCodeDoDia(); // ← isso força a geração sempre
 
 // Agenda QR diário às 07h (seg a sex)
 cron.schedule("0 7 * * 1-5", () => {
