@@ -17,43 +17,55 @@ app.use(express.json());
 app.use(cors());
 app.use('/back-end', express.static(path.join(__dirname, '.')));
 
-// Variável para armazenar o token do dia
 let dailyToken = "";
 
-// Função para gerar o token JWT
+// Tenta carregar token salvo no disco ao iniciar
+function carregarTokenDoArquivo() {
+  try {
+    const salvo = fs.readFileSync(path.join(__dirname, 'token.json'), 'utf-8');
+    dailyToken = JSON.parse(salvo).token;
+    console.log('📦 Token carregado do disco.');
+  } catch (err) {
+    console.warn('⚠️ Nenhum token salvo encontrado. Será gerado um novo.');
+  }
+}
+
+// Gera novo token JWT
 function gerarTokenQR() {
   const payload = {
     clientId: 'c1',
     type: 'loginQR',
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // 24h
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24
   };
   return jwt.sign(payload, process.env.SECRET);
 }
 
-// Função para gerar e salvar o QR Code
+// Gera o QRCode e salva o token em disco
 async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
-  dailyToken = token; // Salva o token atual
+  dailyToken = token;
 
-const url = `https://front-office-5ifz.onrender.com/login?token=${encodeURIComponent(token)}`;
-  console.warn('URL do QR Code gerado:', url);
+  const url = `https://front-office-5ifz.onrender.com/login?token=${encodeURIComponent(token)}`;
+  console.warn('🧾 URL do QR Code:', url);
 
   const qrImageBuffer = await QRCode.toBuffer(url);
-  fs.writeFileSync('./qrcode.png', qrImageBuffer);
-  console.log('✅ QR Code do dia gerado');
+  fs.writeFileSync(path.join(__dirname, 'qrcode.png'), qrImageBuffer);
+  fs.writeFileSync(path.join(__dirname, 'token.json'), JSON.stringify({ token }));
+  console.log('✅ QR Code gerado e token salvo.');
 }
 
-// Agendamento diário para rodar às 07h de segunda a sexta
+// Agendamento diário
 cron.schedule('0 7 * * 1-5', () => {
-  console.log('⏰ Executando agendamento de QR Code...');
+  console.log('⏰ Gerando QR Code agendado...');
   gerarQRCodeDoDia();
 });
 
-// Executa ao iniciar o servidor
+// Gera na primeira execução
+carregarTokenDoArquivo();
 gerarQRCodeDoDia();
 
-// Endpoint para validar o token recebido do frontend
+// Valida token
 app.post('/api/validate-token', (req, res) => {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace('Bearer ', '');
@@ -65,9 +77,8 @@ app.post('/api/validate-token', (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
 
-    // Apenas o token atual é aceito
     if (token !== dailyToken) {
-      return res.status(403).json({ valid: false, error: 'Token inválido ou não autorizado' });
+      return res.status(403).json({ valid: false, error: 'Token inválido ou desatualizado' });
     }
 
     res.json({ valid: true, clientId: decoded.clientId });
@@ -76,4 +87,4 @@ app.post('/api/validate-token', (req, res) => {
   }
 });
 
-app.listen(3001, () => console.log('✅ Backend rodando na porta 3001'));
+app.listen(3001, () => console.log('🚀 Backend rodando na porta 3001'));
