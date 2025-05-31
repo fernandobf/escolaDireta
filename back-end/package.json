@@ -2,9 +2,9 @@
   "name": "backend",
   "version": "1.0.0",
   "type": "commonjs",
-  "main": "qrCode.js",
+  "main": "qrCode.mjs",
   "scripts": {
-    "start": "node qrCode.js",
+    "start": "node qrCode.mjs",
     "dev": "ts-node index.ts"
   },
   "dependencies": {
