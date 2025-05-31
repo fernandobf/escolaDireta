@@ -17,26 +17,13 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Rotas da API
 app.use("/api", authRoutes);
 app.use("/api/logs", logsRoutes);
 
-// Variável global do token
+// Token do dia
 let dailyToken = "";
 
-// Garante caminho absoluto à raiz do projeto
 const basePath = path.resolve(__dirname);
-
-// Carrega token do disco (caso exista)
-function carregarTokenDoArquivo() {
-  try {
-    const salvo = fs.readFileSync(path.join(basePath, "token.json"), "utf-8");
-    dailyToken = JSON.parse(salvo).token;
-    console.log("📦 Token carregado do disco.");
-  } catch {
-    console.warn("⚠️ Nenhum token salvo encontrado.");
-  }
-}
 
 // Gera novo token
 function gerarTokenQR(): string {
@@ -44,12 +31,12 @@ function gerarTokenQR(): string {
     clientId: "c1",
     type: "loginQR",
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24h
   };
   return jwt.sign(payload, process.env.SECRET || "fallback_secret");
 }
 
-// Gera QR code e salva o token
+// Salva token e QR Code
 async function gerarQRCodeDoDia() {
   const token = gerarTokenQR();
   dailyToken = token;
@@ -64,10 +51,23 @@ async function gerarQRCodeDoDia() {
   console.log("✅ QR Code e token gerados.");
 }
 
-// Endpoint para validar token (caso queira reutilizar depois)
-// app.post("/api/validate-token", (req, res) => { ... });
+// Tenta carregar o token do disco
+function carregarTokenDoArquivo() {
+  try {
+    const salvo = fs.readFileSync(path.join(basePath, "token.json"), "utf-8");
+    const token = JSON.parse(salvo).token;
 
-// Exibe a imagem do QR Code
+    // Verifica se o token é válido e ainda não expirou
+    jwt.verify(token, process.env.SECRET || "fallback_secret");
+    dailyToken = token;
+    console.log("📦 Token válido carregado do disco.");
+  } catch {
+    console.warn("⚠️ Token ausente, expirado ou inválido. Gerando novo...");
+    gerarQRCodeDoDia(); // Gera se inválido
+  }
+}
+
+// Exposição do QR Code
 app.get("/back-end/qrcode.png", (req, res) => {
   const filePath = path.join(basePath, "qrcode.png");
   if (fs.existsSync(filePath)) {
@@ -77,16 +77,16 @@ app.get("/back-end/qrcode.png", (req, res) => {
   }
 });
 
-// Inicialização imediata
+// Inicialização segura
 carregarTokenDoArquivo();
-gerarQRCodeDoDia();
 
-// Agenda: segunda a sexta às 7h
+// Agenda: 07h de segunda a sexta
 cron.schedule("0 7 * * 1-5", () => {
-  console.log("⏰ Gerando novo QR Code...");
+  console.log("⏰ Agendamento: gerando QR Code do dia...");
   gerarQRCodeDoDia();
 });
 
+// Inicializa servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
