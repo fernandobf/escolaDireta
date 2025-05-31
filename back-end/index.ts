@@ -1,16 +1,18 @@
+// index.ts
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import cron from "node-cron";
 import path from "path";
+import fs from "fs";
 
 import authRoutes from "./routes/auth";
 import logsRoutes from "./routes/logs";
 import {
   carregarTokenDoArquivo,
   gerarQRCodeDoDia,
-} from "./utils/gerarQRCode"; // Importa funções do módulo centralizado
+} from "./utils/gerarQRCode";
 
 dotenv.config();
 
@@ -18,34 +20,30 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Rotas da API
+// Rotas principais
 app.use("/api", authRoutes);
 app.use("/api/logs", logsRoutes);
 
-// Caminho absoluto para a raiz (usado na exposição da imagem)
-const basePath = path.resolve(__dirname);
-
-// Exposição do QR Code via rota
+// Exposição do QR Code
 app.get("/back-end/qrcode.png", (req, res) => {
-  const filePath = path.join(basePath, "qrcode.png");
-  if (require("fs").existsSync(filePath)) {
+  const filePath = path.join(process.cwd(), "qrcode.png");
+  if (fs.existsSync(filePath)) {
     res.sendFile(filePath);
   } else {
     res.status(404).send("QR Code ainda não gerado.");
   }
 });
 
-// Inicializa token (do disco ou novo)
-carregarTokenDoArquivo();
-gerarQRCodeDoDia(); // opcional, pois o carregarTokenDoArquivo já chama se necessário
+// Inicialização segura
+carregarTokenDoArquivo(); // já gera novo se necessário
 
-// Agendamento diário às 07h (segunda a sexta)
+// Agenda QR diário às 07h (seg a sex)
 cron.schedule("0 7 * * 1-5", () => {
   console.log("⏰ Agendamento: gerando QR Code do dia...");
   gerarQRCodeDoDia();
 });
 
-// Inicializa servidor
+// Inicia servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
