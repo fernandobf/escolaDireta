@@ -4,8 +4,8 @@
   "type": "commonjs",
   "main": "qrCode.mjs",
   "scripts": {
-  "build": "tsc",
-  "start": "node dist/index.js",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "dev": "ts-node index.ts"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.29",
     "@types/pg": "^8.15.2",
+    "@types/qrcode": "^1.5.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
