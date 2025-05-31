@@ -34,7 +34,8 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/logs/class-logs`);
+      // const response = await fetch(`http://localhost:3000/api/logs/class-logs`);
+      const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/class-logs`);
       const data: CheckoutLog[] = await response.json();
 
       if (Array.isArray(data)) {
@@ -91,7 +92,8 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/logs/${logId}/status`, {
+      // const response = await fetch(`http://localhost:3000/api/logs/${logId}/status`, {
+      const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/${logId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ new_status: newStatus }),
