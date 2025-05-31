@@ -17,6 +17,7 @@ interface LiveCheckoutsProps {
 }
 
 const POLL_INTERVAL = 5000;
+const FINAL_STATUS = "Finalizado";
 
 const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   setOpenOccurrencesCount,
@@ -26,32 +27,15 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   const currentClassParam = searchParams.get("name")?.toLowerCase() || "";
   const [logs, setLogs] = useState<CheckoutLog[]>([]);
   const prevLogIdsRef = useRef<Set<string>>(new Set());
-  const beepRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Seta a turma atual para o header
     setCurrentClass(currentClassParam);
   }, [currentClassParam, setCurrentClass]);
 
-  useEffect(() => {
-    beepRef.current = new Audio(`${import.meta.env.BASE_URL}beep.mp3`);
-    beepRef.current.load();
-  }, []);
-
-  const playBeep = () => {
-    if (beepRef.current) {
-      beepRef.current.currentTime = 0;
-      beepRef.current.play().catch((err) => {
-        console.warn("Erro ao tocar o som:", err);
-      });
-    }
-  };
-
   const fetchLogs = async () => {
     try {
-      const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzXbl0HQ9NfsskL3fxz_-QUeBAyxeh85GblPpPN6aObkqjmu_gadjzb2yJS22CUDTYL/exec?act=class&name=${currentClassParam}`
-      );
+      // const response = await fetch(`http://localhost:3000/api/logs/class-logs`);
+      const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/class-logs`);
       const data: CheckoutLog[] = await response.json();
 
       if (Array.isArray(data)) {
@@ -60,29 +44,20 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
             new Date(b.log_timestamp).getTime() - new Date(a.log_timestamp).getTime()
         );
 
-        const prevIds = prevLogIdsRef.current;
         const newLogs = sorted.filter(
           (log) =>
-            !prevIds.has(log.log_id) &&
+            !prevLogIdsRef.current.has(log.log_id) &&
             log.log_student_class.toLowerCase() === currentClassParam
         );
-
-        if (newLogs.length > 0) {
-          playBeep();
-        }
 
         prevLogIdsRef.current = new Set(sorted.map((log) => log.log_id));
         setLogs(sorted);
 
-        // Atualiza quantidade de ocorrências abertas
         const openOccurrences = sorted.filter(
-          (log) =>
-            log.log_student_class.toLowerCase() === currentClassParam &&
-            log.log_status !== "Concluído"
+          (log) => log.log_status !== FINAL_STATUS
         );
         setOpenOccurrencesCount(openOccurrences.length);
       } else {
-        console.warn("Resposta inválida:", data);
         setLogs([]);
         setOpenOccurrencesCount(0);
       }
@@ -110,29 +85,19 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     studentName: string
   ) => {
     const confirmMsg =
-      newStatus === "Em processamento"
+      newStatus === "Em progresso"
         ? `Iniciar processo do aluno(a) ${studentName}?`
         : `Concluir processo do aluno(a) ${studentName}?`;
 
     if (!window.confirm(confirmMsg)) return;
 
-    const act =
-      newStatus === "Em processamento"
-        ? "update_status_progress"
-        : "update_status_finished";
-
     try {
-      const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzXbl0HQ9NfsskL3fxz_-QUeBAyxeh85GblPpPN6aObkqjmu_gadjzb2yJS22CUDTYL/exec?act=${act}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            log_id: logId,
-            new_status: newStatus,
-          }).toString(),
-        }
-      );
+      // const response = await fetch(`http://localhost:3000/api/logs/${logId}/status`, {
+      const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/${logId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_status: newStatus }),
+      });
 
       const result = await response.json();
       if (result.success) {
@@ -155,7 +120,9 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
   return (
     <div className="content internal">
-      <h2 className="text-xl font-bold mb-4">Checkouts em andamento</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Checkouts em andamento</h2>
+      </div>
 
       {logs.length === 0 ? (
         <p className="text-gray-500">Nenhum checkout registrado.</p>
@@ -171,7 +138,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
             </tr>
           </thead>
           <tbody>
-            {logs.filter((log) => log.log_status !== "Concluído").length === 0 ? (
+            {logs.filter((log) => log.log_status !== FINAL_STATUS).length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-4 text-gray-500">
                   Não há solicitações pendentes
@@ -179,7 +146,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
               </tr>
             ) : (
               logs
-                .filter((log) => log.log_status !== "Concluído")
+                .filter((log) => log.log_status !== FINAL_STATUS)
                 .map((log) => (
                   <tr key={log.log_id} className={getRowClass(log)}>
                     <td className="border px-2 py-1">{log.log_student_name}</td>
@@ -187,31 +154,26 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
                     <td className="border px-2 py-1">{log.log_student_class.toUpperCase()}</td>
                     <td className="border px-2 py-1">{formatDate(log.log_timestamp)}</td>
                     <td className="border px-2 py-1">
-                      {log.log_student_class.toLowerCase() == currentClassParam ? (
-                        log.log_status === "Iniciado" ? (
-                          <button
-                            className="btn btn-primary"
-                            onClick={() =>
-                              handleStatusUpdate(log.log_id, "Em processamento", log.log_student_name)
-                            }
-                          >
-                            Aceitar solicitação
-                          </button>
-                        ) : (
-                          <button
-                            className="btn btn-success"
-                            onClick={() =>
-                              handleStatusUpdate(log.log_id, "Concluído", log.log_student_name)
-                            }
-                          >
-                            Concluir
-                          </button>
-                        )
-                      ) : null}
+                      {log.log_status === "Solicitado" ? (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() =>
+                            handleStatusUpdate(log.log_id, "Em progresso", log.log_student_name)
+                          }
+                        >
+                          Aceitar solicitação
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-success"
+                          onClick={() =>
+                            handleStatusUpdate(log.log_id, "Finalizado", log.log_student_name)
+                          }
+                        >
+                          Concluir
+                        </button>
+                      )}
                     </td>
-
-
-
                   </tr>
                 ))
             )}
