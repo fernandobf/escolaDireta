@@ -55,7 +55,7 @@ function Login() {
     /* if (!validatePhone(phone)) {
       setError("Formato inválido. Use 3519XXXXXXXX");
       return;
-    } 
+    } */
 
     setError("");
     setLoading(true);
