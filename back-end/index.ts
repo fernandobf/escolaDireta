@@ -1,4 +1,4 @@
-// index.ts
+// back-end/index.ts
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -6,8 +6,7 @@ import dotenv from "dotenv";
 import cron from "node-cron";
 import path from "path";
 import fs from "fs";
-import { sseHandler } from './routes/events';
-
+import { sseHandler, sendEventToAll } from './routes/events';
 import authRoutes from "./routes/auth";
 import logsRoutes from "./routes/logs";
 import {
@@ -19,27 +18,29 @@ dotenv.config();
 
 const app = express();
 app.use(cors({ origin: "*" }));
-/* app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"],
-  methods: ["GET", "POST", "PUT"],
-  credentials: false
-})); */
-
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  next();
-});
-
 app.use(bodyParser.json());
+
+// SSE para HTMLs
+app.get('/events', sseHandler);
+
+// ✅ Endpoint que realmente gera novo QR Code e notifica os clientes
+app.post("/api/notify-qrcode-update", async (req, res) => {
+  console.log("📩 Requisição manual recebida: Gerando novo QR Code...");
+  await gerarQRCodeDoDia();
+
+  sendEventToAll({
+    type: "qrcode-updated",
+    timestamp: new Date().toISOString(),
+  });
+
+  res.status(200).json({ ok: true });
+});
 
 // Rotas principais
 app.use("/api", authRoutes);
 app.use("/api/logs", logsRoutes);
-app.get('/events', sseHandler);
 
-// Exposição do QR Code
+// QR Code atual
 app.get("/back-end/qrcode.png", (req, res) => {
   const filePath = path.join(process.cwd(), "qrcode.png");
   if (fs.existsSync(filePath)) {
@@ -49,17 +50,16 @@ app.get("/back-end/qrcode.png", (req, res) => {
   }
 });
 
-// Inicialização segura
-carregarTokenDoArquivo(); // já gera novo se necessário
-// gerarQRCodeDoDia(); // ← isso força a geração sempre
+// Carrega token salvo ou gera novo
+carregarTokenDoArquivo();
 
-// Agenda QR diário às 07h (seg a sex)
+// Agendamento diário às 07h (segunda a sexta)
 cron.schedule("0 7 * * 1-5", () => {
   console.log("⏰ Agendamento: gerando QR Code do dia...");
   gerarQRCodeDoDia();
 });
 
-// Inicia servidor
+// Inicializa servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
