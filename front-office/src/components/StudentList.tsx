@@ -168,7 +168,23 @@ function StudentList() {
           >
             <p><strong>Nome:</strong> {aluno.student_name}</p>
             <p><strong>Turma:</strong> {aluno.spot_name}</p>
-            <p><strong>Status:</strong> {status}</p>
+            <p><strong>Status:</strong>{" "}
+                <span
+                  className="status"
+                  style={{
+                    color: status === "Não iniciado" ? "#333" : "#fff",
+                    backgroundColor:
+                      status === "Em progresso"
+                        ? "green"
+                        : status === "Solicitado"
+                        ? "#836d0c"
+                        : status === "Finalizado"
+                        ? "red"
+                        : "inherit",
+                  }}
+                >
+                  &nbsp;{status}&nbsp;
+                </span></p>
           </div>
         );
       })}
