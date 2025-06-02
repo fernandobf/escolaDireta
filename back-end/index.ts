@@ -73,3 +73,11 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
+
+// para forçar o teste do resetStudentStatus
+app.post("/api/admin/reset-logs", async (req, res) => {
+  console.log("🧼 Requisição manual para resetar logs...");
+  await resetStudentStatus();
+  res.status(200).json({ ok: true });
+});

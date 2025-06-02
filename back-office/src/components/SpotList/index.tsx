@@ -68,7 +68,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     console.log("Conectado ao SSE");
 
     evtSource.onmessage = (event) => {
-        console.log("[SSE] Evento bruto recebido:", event.data);
+      console.log("[SSE] Evento bruto recebido:", event.data);
 
       const data = JSON.parse(event.data);
 
@@ -80,7 +80,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
       if (tiposQueAtualizam.includes(data.type)) {
         console.log("[SSE] Evento recebido:", data);
-            console.log("[SSE] Evento interpretado:", data); // 👈 ADICIONADO
+        console.log("[SSE] Evento interpretado:", data); // 👈 ADICIONADO
         fetchLogs();
       }
     };
