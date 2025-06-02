@@ -63,8 +63,8 @@ cron.schedule("0 7 * * 1-5", () => {
 
 // ✅ Agendamento diário à meia-noite para resetar status dos alunos
 console.log("🕒 Hora local no servidor:", new Date().toLocaleString());
-cron.schedule("*/1 * * * *", async () => {
-    console.log("♻️ Agendamento: resetando status dos alunos...");
+cron.schedule("0 0 * * *", async () => {
+  console.log("♻️ Agendamento: resetando status dos alunos...");
   await resetStudentStatus();
 });
 

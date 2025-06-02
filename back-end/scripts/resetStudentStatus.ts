@@ -1,5 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import pg from 'pg';
-import { sendEventToAll } from '../routes/events'; // ✅ ajusta o caminho se necessário
+import { sendEventToAll } from '../routes/events'; // ajuste o caminho se necessário
 
 const { Pool } = pg;
 
@@ -44,7 +47,7 @@ export async function resetStudentStatus() {
 
       console.log("✅ Logs arquivados e tabela limpa com sucesso.");
 
-      // 3. 🔔 Envia evento SSE para atualizar interfaces conectadas
+      // 3. 🔔 Envia evento SSE (se clientes estiverem conectados)
       sendEventToAll({
         type: "logs-resetados",
         timestamp: new Date().toISOString(),
@@ -59,12 +62,19 @@ export async function resetStudentStatus() {
 
   } catch (error) {
     console.error("❌ Erro ao arquivar/limpar logs:", error);
-  } finally {
-    await pool.end();
   }
 }
 
-// Permite rodar manualmente via terminal
+// ✅ Permite rodar manualmente via terminal
 if (require.main === module) {
-  resetStudentStatus();
+  console.log("🔍 DATABASE_URL usada:", process.env.DATABASE_URL);
+  resetStudentStatus()
+    .then(() => {
+      console.log("✔️ Execução manual finalizada.");
+      return pool.end(); // ⚠️ Fecha o pool só ao rodar diretamente
+    })
+    .catch((err) => {
+      console.error("❌ Erro na execução manual:", err);
+      process.exit(1);
+    });
 }
