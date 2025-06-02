@@ -49,13 +49,13 @@ function Login() {
       .finally(() => setLoading(false));
   }, [navigate, token]);
 
-  const validatePhone = (num: string) => /^351\d{9}$/.test(num);
+  // const validatePhone = (num: string) => /^351\d{9}$/.test(num);
 
   const handleLogin = async () => {
-    if (!validatePhone(phone)) {
+    /* if (!validatePhone(phone)) {
       setError("Formato inválido. Use 3519XXXXXXXX");
       return;
-    }
+    } 
 
     setError("");
     setLoading(true);
