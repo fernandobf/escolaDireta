@@ -1,4 +1,3 @@
-// back-end/index.ts
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -13,6 +12,9 @@ import {
   carregarTokenDoArquivo,
   gerarQRCodeDoDia,
 } from "./utils/gerarQRCode";
+
+// 👉 IMPORTA o reset que você já criou
+import { resetStudentStatus } from "./scripts/resetStudentStatus";
 
 dotenv.config();
 
@@ -53,10 +55,17 @@ app.get("/back-end/qrcode.png", (req, res) => {
 // Carrega token salvo ou gera novo
 carregarTokenDoArquivo();
 
-// Agendamento diário às 07h (segunda a sexta)
+// ✅ Agendamento diário às 07h (segunda a sexta) para gerar QR Code
 cron.schedule("0 7 * * 1-5", () => {
   console.log("⏰ Agendamento: gerando QR Code do dia...");
   gerarQRCodeDoDia();
+});
+
+// ✅ Agendamento diário à meia-noite para resetar status dos alunos
+console.log("🕒 Hora local no servidor:", new Date().toLocaleString());
+cron.schedule("0 0 * * *", async () => {
+  console.log("♻️ Agendamento: resetando status dos alunos...");
+  await resetStudentStatus();
 });
 
 // Inicializa servidor
