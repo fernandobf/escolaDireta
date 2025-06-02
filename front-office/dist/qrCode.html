@@ -121,10 +121,9 @@
       <small>Um novo QR Code está sendo gerado.</small>
     </div>
 
-    <!-- src="https://back-end-2vzw.onrender.com/back-end/qrcode.png" -->
     <img
       id="qrcode"
-      src="http://localhost:3000/back-end/qrcode.png"
+      src="https://back-end-2vzw.onrender.com/back-end/qrcode.png"
       alt="QR Code"
       onload="document.getElementById('loading').style.display = 'none'; document.getElementById('qrcode').style.display = 'block';"
     />
@@ -159,10 +158,7 @@
       }
     }
 
-    const BASE_URL = location.hostname === "localhost"
-      ? "http://localhost:3000"
-      : "http://localhost:3000";
-      // : "https://back-end-2vzw.onrender.com";
+    const BASE_URL = "https://back-end-2vzw.onrender.com";
 
     function conectarSSE() {
       const evtSource = new EventSource(`${BASE_URL}/events`);
@@ -181,23 +177,19 @@
 
             setTimeout(() => {
               const timestamp = Date.now();
-              img.src = `${BASE_URL}/back-end/qrcode.png?t=${timestamp}`;
-            }, 4000);
+              const newImg = new Image();
+              newImg.src = `${BASE_URL}/back-end/qrcode.png?t=${timestamp}`;
 
-            // Cria uma nova imagem para forçar recarregamento
-            const newImg = new Image();
-            const timestamp = Date.now();
-            newImg.src = `${BASE_URL}/back-end/qrcode.png?t=${timestamp}`;
+              newImg.onload = () => {
+                img.src = newImg.src;
+                loading.style.display = "none";
+                img.style.display = "block";
+              };
 
-            newImg.onload = () => {
-              img.src = newImg.src;
-              loading.style.display = "none";
-              img.style.display = "block";
-            };
-
-            newImg.onerror = () => {
-              console.warn("⚠️ Erro ao carregar novo QR Code");
-            };
+              newImg.onerror = () => {
+                console.warn("⚠️ Erro ao carregar novo QR Code");
+              };
+            }, 2000); // Apenas um charme.
           }
         } catch (err) {
           console.warn("❌ Erro ao interpretar evento SSE:", err);
@@ -206,14 +198,12 @@
 
       evtSource.onerror = (err) => {
         console.warn("⚠️ SSE desconectado. Tentando reconectar em 5s...", err);
-        evtSource.close(); // fecha a conexão antiga
-        setTimeout(conectarSSE, 5000); // tenta reconectar
+        evtSource.close();
+        setTimeout(conectarSSE, 5000);
       };
     }
 
-    conectarSSE(); // inicia conexão
+    conectarSSE();
   </script>
-
-
 </body>
-</html>
+</html>rrr

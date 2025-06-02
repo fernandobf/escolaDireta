@@ -62,7 +62,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   };
 
   useEffect(() => {
-    fetchLogs(); // inicial
+    fetchLogs(); // carregamento inicial
 
     const evtSource = new EventSource("https://back-end-2vzw.onrender.com/events");
     console.log("Conectado ao SSE");
@@ -70,17 +70,20 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     evtSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      if (
-        data.type === "status-update" ||
-        data.type === "new-checkout-request"
-      ) {
+      const tiposQueAtualizam = [
+        "status-update",
+        "new-checkout-request",
+        "logs-resetados",
+      ];
+
+      if (tiposQueAtualizam.includes(data.type)) {
         console.log("[SSE] Evento recebido:", data);
         fetchLogs();
       }
     };
 
     evtSource.onerror = (err) => {
-      console.warn("[SSE] Conexão falhou:", err);
+      console.warn("[SSE] Conexão SSE falhou:", err);
       evtSource.close();
     };
 
