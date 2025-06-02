@@ -158,7 +158,7 @@ function StudentList() {
 
         return (
           <div
-            key={aluno.student_id}
+            key={`${aluno.student_id}-${getStatusForStudent(aluno.student_id) || 'na'}`}
             onClick={() => handleSelectIndividual(aluno.student_id)}
             className={`btn-box ${selectedStudents.has(aluno.student_id) ? "box-active" : ""} ${isDisabled ? "box-disabled" : ""}`}
             style={{
