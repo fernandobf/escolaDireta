@@ -62,7 +62,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   useEffect(() => {
     fetchLogs(); // Primeira chamada
 
-    const evtSource = new EventSource("http://localhost:3000/events");
+    const evtSource = new EventSource("https://back-end-2vzw.onrender.com/events");
     console.log("🎧 Conectado ao SSE (LiveCheckouts)");
 
     evtSource.onmessage = (event) => {

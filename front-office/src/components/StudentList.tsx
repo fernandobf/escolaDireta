@@ -45,7 +45,7 @@ function StudentList() {
 
     fetchCurrentLogs();
 
-    const evtSource = new EventSource("http://localhost:3000/events");
+    const evtSource = new EventSource("https://back-end-2vzw.onrender.com/events");
     console.log("Conectado ao SSE");
 
     evtSource.onmessage = (event) => {
@@ -109,7 +109,7 @@ function StudentList() {
     };
 
     try {
-      const res = await fetch("http://localhost:3000/api/logs/start", {
+      const res = await fetch("https://back-end-2vzw.onrender.com/api/logs/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
