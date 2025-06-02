@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import pool from "../config/db";
+import { sendEventToAll } from "../routes/events"; // <= IMPORTANTE
 
 export const updateLogStatusHandler = async (req: Request, res: Response) => {
   const logId = Number(req.params.id);
@@ -9,14 +10,14 @@ export const updateLogStatusHandler = async (req: Request, res: Response) => {
     "Solicitado": 4,
     "Em progresso": 2,
     "Finalizado": 3,
-    "Não iniciado": 1, // se quiser permitir reverter
+    "Não iniciado": 1,
   };
 
   const newActionId = actionMap[new_status];
 
   if (!newActionId) {
     res.status(400).json({ error: "Status inválido" });
-    return; // Isso evita warnings de 'não terminar a execução'
+    return;
   }
 
   try {
@@ -29,6 +30,16 @@ export const updateLogStatusHandler = async (req: Request, res: Response) => {
       res.status(404).json({ error: "Log não encontrado" });
       return;
     }
+
+    // 💬 Envia evento para todos conectados
+    console.log("Enviando evento SSE:", { type: 'status-update' });
+
+    sendEventToAll({
+      type: "status-update",
+      logId,
+      newStatus: new_status,
+      timestamp: new Date().toISOString(),
+    });
 
     res.json({ success: true });
   } catch (err) {

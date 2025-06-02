@@ -16,7 +16,6 @@ interface LiveCheckoutsProps {
   setCurrentClass: (className: string) => void;
 }
 
-const POLL_INTERVAL = 5000;
 const FINAL_STATUS = "Finalizado";
 
 const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
@@ -34,7 +33,6 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
   const fetchLogs = async () => {
     try {
-      // const response = await fetch(`http://localhost:3000/api/logs/class-logs`);
       const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/class-logs`);
       const data: CheckoutLog[] = await response.json();
 
@@ -42,12 +40,6 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
         const sorted = data.sort(
           (a, b) =>
             new Date(b.log_timestamp).getTime() - new Date(a.log_timestamp).getTime()
-        );
-
-        const newLogs = sorted.filter(
-          (log) =>
-            !prevLogIdsRef.current.has(log.log_id) &&
-            log.log_student_class.toLowerCase() === currentClassParam
         );
 
         prevLogIdsRef.current = new Set(sorted.map((log) => log.log_id));
@@ -68,16 +60,37 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   };
 
   useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, POLL_INTERVAL);
-    return () => clearInterval(interval);
+    fetchLogs(); // Primeira chamada
+
+    const evtSource = new EventSource("http://localhost:3000/events");
+    console.log("🎧 Conectado ao SSE (LiveCheckouts)");
+
+    evtSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (
+        data.type === "new-checkout-request" ||
+        data.type === "status-update"
+      ) {
+        console.log("[SSE] Evento recebido:", data);
+        fetchLogs();
+      }
+    };
+
+    evtSource.onerror = (err) => {
+      console.warn("[SSE] Erro na conexão:", err);
+      evtSource.close();
+    };
+
+    return () => {
+      evtSource.close();
+    };
   }, [currentClassParam]);
 
-  const getRowClass = (log: CheckoutLog) => {
-    return log.log_student_class.toLowerCase() === currentClassParam
+  const getRowClass = (log: CheckoutLog) =>
+    log.log_student_class.toLowerCase() === currentClassParam
       ? "bg-yellow-200"
       : "";
-  };
 
   const handleStatusUpdate = async (
     logId: string,
@@ -92,7 +105,6 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      // const response = await fetch(`http://localhost:3000/api/logs/${logId}/status`, {
       const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/${logId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -100,11 +112,10 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
       });
 
       const result = await response.json();
-      if (result.success) {
-        fetchLogs();
-      } else {
+      if (!result.success) {
         console.error("Erro ao atualizar status:", result.error);
       }
+      // Não precisa chamar fetchLogs aqui, o SSE fará isso
     } catch (error) {
       console.error("Erro na requisição:", error);
     }

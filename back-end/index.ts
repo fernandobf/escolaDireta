@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import cron from "node-cron";
 import path from "path";
 import fs from "fs";
+import { sseHandler } from './routes/events';
 
 import authRoutes from "./routes/auth";
 import logsRoutes from "./routes/logs";
@@ -17,12 +18,26 @@ import {
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: "*" }));
+/* app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:5174"],
+  methods: ["GET", "POST", "PUT"],
+  credentials: false
+})); */
+
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  next();
+});
+
 app.use(bodyParser.json());
 
 // Rotas principais
 app.use("/api", authRoutes);
 app.use("/api/logs", logsRoutes);
+app.get('/events', sseHandler);
 
 // Exposição do QR Code
 app.get("/back-end/qrcode.png", (req, res) => {

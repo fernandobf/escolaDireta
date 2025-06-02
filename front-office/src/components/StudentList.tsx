@@ -20,26 +20,54 @@ function StudentList() {
   const [btnTxt, setBtnTxt] = useState("Solicitar Checkout");
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
+  const fetchCurrentLogs = async () => {
+    try {
+      const res = await fetch("https://back-end-2vzw.onrender.com/api/logs/current");
+      const data = await res.json();
+
+      if (Array.isArray(data)) {
+        setLogs(data);
+      } else {
+        console.error("Resposta inesperada dos logs:", data);
+        setLogs([]);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar logs:", err);
+      setLogs([]);
+    }
+  };
+
   useEffect(() => {
     const storedAlunos = localStorage.getItem("alunos");
     if (storedAlunos) {
       setAlunos(JSON.parse(storedAlunos));
     }
 
-    fetch("https://back-end-2vzw.onrender.com/api/logs/current")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setLogs(data);
-        } else {
-          console.error("Resposta inesperada dos logs:", data);
-          setLogs([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar logs:", err);
-        setLogs([]);
-      });
+    fetchCurrentLogs();
+
+    const evtSource = new EventSource("http://localhost:3000/events");
+    console.log("Conectado ao SSE");
+
+    evtSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (
+        data.type === "status-update" ||
+        data.type === "new-checkout-request"
+      ) {
+        console.log("[SSE] Atualização recebida:", data);
+        fetchCurrentLogs();
+      }
+    };
+
+    evtSource.onerror = (err) => {
+      console.warn("[SSE] Erro na conexão:", err);
+      evtSource.close();
+    };
+
+    return () => {
+      evtSource.close();
+    };
   }, []);
 
   const getStatusForStudent = (id: number): string | null => {
@@ -81,7 +109,7 @@ function StudentList() {
     };
 
     try {
-      const res = await fetch("https://back-end-2vzw.onrender.com/api/logs/start", {
+      const res = await fetch("http://localhost:3000/api/logs/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -92,8 +120,8 @@ function StudentList() {
       alert("Solicitação enviada com sucesso!");
       setSelectedStudents(new Set());
 
-      const updatedLogs = await fetch("https://back-end-2vzw.onrender.com/api/logs/current").then((r) => r.json());
-      setLogs(updatedLogs);
+      // Sem necessidade de chamar fetchCurrentLogs aqui
+      // pois o evento SSE será emitido automaticamente
     } catch (err) {
       alert("Erro ao solicitar checkout.");
       console.error(err);

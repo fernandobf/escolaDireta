@@ -16,7 +16,6 @@ interface LiveCheckoutsProps {
   setCurrentClass: (className: string) => void;
 }
 
-const POLL_INTERVAL = 5000;
 const FINAL_STATUS = "Finalizado";
 
 const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
@@ -34,8 +33,9 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
   const fetchLogs = async () => {
     try {
-      // const response = await fetch(`http://localhost:3000/api/logs/class-logs`);
-      const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/class-logs`);
+      const response = await fetch("http://localhost:3000/api/logs/class-logs", {
+        cache: "no-store",
+      });
       const data: CheckoutLog[] = await response.json();
 
       if (Array.isArray(data)) {
@@ -43,12 +43,6 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
           (a, b) =>
             new Date(b.log_timestamp).getTime() - new Date(a.log_timestamp).getTime()
         );
-
-        /*const newLogs = sorted.filter(
-          (log) =>
-            !prevLogIdsRef.current.has(log.log_id) &&
-            log.log_student_class.toLowerCase() === currentClassParam
-        );*/
 
         prevLogIdsRef.current = new Set(sorted.map((log) => log.log_id));
         setLogs(sorted);
@@ -68,16 +62,32 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   };
 
   useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, POLL_INTERVAL);
-    return () => clearInterval(interval);
-  }, [currentClassParam]);
+    fetchLogs(); // inicial
 
-  const getRowClass = (log: CheckoutLog) => {
-    return log.log_student_class.toLowerCase() === currentClassParam
-      ? "bg-yellow-200"
-      : "";
-  };
+    const evtSource = new EventSource("http://localhost:3000/events");
+    console.log("Conectado ao SSE");
+
+    evtSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (
+        data.type === "status-update" ||
+        data.type === "new-checkout-request"
+      ) {
+        console.log("[SSE] Evento recebido:", data);
+        fetchLogs();
+      }
+    };
+
+    evtSource.onerror = (err) => {
+      console.warn("[SSE] Conexão falhou:", err);
+      evtSource.close();
+    };
+
+    return () => {
+      evtSource.close();
+    };
+  }, [currentClassParam]);
 
   const handleStatusUpdate = async (
     logId: string,
@@ -92,17 +102,14 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      // const response = await fetch(`http://localhost:3000/api/logs/${logId}/status`, {
-      const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/${logId}/status`, {
+      const response = await fetch(`http://localhost:3000/api/logs/${logId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ new_status: newStatus }),
       });
 
       const result = await response.json();
-      if (result.success) {
-        fetchLogs();
-      } else {
+      if (!result.success) {
         console.error("Erro ao atualizar status:", result.error);
       }
     } catch (error) {
@@ -118,13 +125,15 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     return `${day}, às ${hours}h${minutes}min`;
   };
 
+  const activeLogs = logs.filter((log) => log.log_status !== FINAL_STATUS);
+
   return (
     <div className="content internal">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Checkouts em andamento</h2>
       </div>
 
-      {logs.length === 0 ? (
+      {activeLogs.length === 0 ? (
         <p className="text-gray-500">Nenhum checkout registrado.</p>
       ) : (
         <table className="w-full border-collapse border border-gray-300">
@@ -138,45 +147,35 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
             </tr>
           </thead>
           <tbody>
-            {logs.filter((log) => log.log_status !== FINAL_STATUS).length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-4 text-gray-500">
-                  Não há solicitações pendentes
+            {activeLogs.map((log) => (
+              <tr key={log.log_id} className="bg-yellow-200">
+                <td className="border px-2 py-1">{log.log_student_name}</td>
+                <td className="border px-2 py-1">{log.log_student_tutor_name}</td>
+                <td className="border px-2 py-1">{log.log_student_class.toUpperCase()}</td>
+                <td className="border px-2 py-1">{formatDate(log.log_timestamp)}</td>
+                <td className="border px-2 py-1">
+                  {log.log_status === "Solicitado" ? (
+                    <button
+                      className="btn btn-primary"
+                      onClick={() =>
+                        handleStatusUpdate(log.log_id, "Em progresso", log.log_student_name)
+                      }
+                    >
+                      Aceitar solicitação
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-success"
+                      onClick={() =>
+                        handleStatusUpdate(log.log_id, "Finalizado", log.log_student_name)
+                      }
+                    >
+                      Concluir
+                    </button>
+                  )}
                 </td>
               </tr>
-            ) : (
-              logs
-                .filter((log) => log.log_status !== FINAL_STATUS)
-                .map((log) => (
-                  <tr key={log.log_id} className={getRowClass(log)}>
-                    <td className="border px-2 py-1">{log.log_student_name}</td>
-                    <td className="border px-2 py-1">{log.log_student_tutor_name}</td>
-                    <td className="border px-2 py-1">{log.log_student_class.toUpperCase()}</td>
-                    <td className="border px-2 py-1">{formatDate(log.log_timestamp)}</td>
-                    <td className="border px-2 py-1">
-                      {log.log_status === "Solicitado" ? (
-                        <button
-                          className="btn btn-primary"
-                          onClick={() =>
-                            handleStatusUpdate(log.log_id, "Em progresso", log.log_student_name)
-                          }
-                        >
-                          Aceitar solicitação
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-success"
-                          onClick={() =>
-                            handleStatusUpdate(log.log_id, "Finalizado", log.log_student_name)
-                          }
-                        >
-                          Concluir
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-            )}
+            ))}
           </tbody>
         </table>
       )}

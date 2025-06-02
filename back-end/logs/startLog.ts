@@ -1,6 +1,6 @@
-// controllers/logs/startLog.ts
-import { Request, Response, RequestHandler } from "express";
+import { RequestHandler } from "express";
 import pool from "../config/db";
+import { sendEventToAll } from "../routes/events";
 
 export const startLog: RequestHandler = async (req, res) => {
   try {
@@ -13,6 +13,7 @@ export const startLog: RequestHandler = async (req, res) => {
       res.status(500).json({ error: "Módulo 'checkout' não encontrado." });
       return;
     }
+
     const module_id = moduleRes.rows[0].module_id;
 
     const actionRes = await pool.query(
@@ -23,9 +24,10 @@ export const startLog: RequestHandler = async (req, res) => {
       res.status(500).json({ error: "Ação 'solicitado' não encontrada." });
       return;
     }
+
     const action_id = actionRes.rows[0].action_id;
 
-    const values = students.map((student_id: number) => 
+    const values = students.map((student_id: number) =>
       `(${student_id}, ${caregiver_id}, ${module_id}, ${action_id})`
     ).join(", ");
 
@@ -33,6 +35,15 @@ export const startLog: RequestHandler = async (req, res) => {
       INSERT INTO logs (log_student_id, log_caregiver_id, log_module_id, log_action_id)
       VALUES ${values}
     `);
+
+    const event = {
+      type: "new-checkout-request",
+      students,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log("📡 SSE emitido:", event);
+    sendEventToAll(event);
 
     res.status(200).json({ message: "Logs inseridos com sucesso" });
   } catch (error) {
