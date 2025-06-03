@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-// Armazenamento em memória do token
+// Armazenamento em memória do token atual
 let dailyToken = "";
 
 /**
@@ -16,32 +16,36 @@ export function getDailyToken(): string {
  */
 export async function gerarQRCodeDoDia(): Promise<void> {
   try {
-    // Define o payload do token
+    // Definição do payload do token
     const payload = {
       clientId: "c1",
       type: "loginQR",
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // expira em 24h
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // expira em 24 horas
     };
 
-    const secret = "fallback_secret"; // 🔒 Você pode mudar isso para algo mais seguro depois
+    // Usa variáveis de ambiente se existirem — senão, usa valor seguro default
+    const secret = process.env.JWT_SECRET || process.env.SECRET || "fallback_secret";
+
+    // Geração do token JWT
     const novoToken = jwt.sign(payload, secret);
 
-    // Define o endereço fixo do front-office
-    const frontOfficeURL = "https://front-office-5ifz.onrender.com";
+    // URL de destino onde o QR Code vai redirecionar
+    const frontOfficeURL = process.env.FRONT_OFFICE_URL || "https://front-office-5ifz.onrender.com";
     const loginUrl = `${frontOfficeURL}/login?token=${encodeURIComponent(novoToken)}`;
 
     console.log("🔗 Novo QR Code aponta para:", loginUrl);
 
-    // Atualiza o token atual em memória
+    // Armazena o token atual em memória
     dailyToken = novoToken;
 
-    // Notifica os clientes conectados via SSE
+    // Notifica todos os clientes conectados via SSE
     const { sendEventToAll } = await import("../routes/events");
     sendEventToAll({
       type: "qrcode-updated",
       timestamp: new Date().toISOString(),
     });
+
   } catch (err) {
     console.error("❌ Erro ao gerar QR Code. Token anterior mantido.", err);
   }
