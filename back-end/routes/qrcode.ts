@@ -11,8 +11,7 @@ export async function qrcodeHandler(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const baseUrl = process.env.BASE_URL || "https://back-end-2vzw.onrender.com";
-  const loginUrl = `${baseUrl}/login?token=${encodeURIComponent(token)}`;
+  const loginUrl = `https://front-office-5ifz.onrender.com/login?token=${encodeURIComponent(token)}`;
 
   try {
     const buffer = await QRCode.toBuffer(loginUrl);
