@@ -3,17 +3,13 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import cron from "node-cron";
-import path from "path";
-import fs from "fs";
 import { sseHandler, sendEventToAll } from './routes/events';
 import authRoutes from "./routes/auth";
 import logsRoutes from "./routes/logs";
 import {
-  carregarTokenDoArquivo,
-  gerarQRCodeDoDia,
+  gerarQRCodeDoDia
 } from "./utils/gerarQRCode";
-
-// 👉 IMPORTA o reset que você já criou
+import { qrcodeHandler } from "./routes/qrcode";
 import { resetStudentStatus } from "./scripts/resetStudentStatus";
 
 dotenv.config();
@@ -25,7 +21,7 @@ app.use(bodyParser.json());
 // SSE para HTMLs
 app.get('/events', sseHandler);
 
-// ✅ Endpoint que realmente gera novo QR Code e notifica os clientes
+// ✅ Endpoint manual para novo QR Code
 app.post("/api/notify-qrcode-update", async (req, res) => {
   console.log("📩 Requisição manual recebida: Gerando novo QR Code...");
   await gerarQRCodeDoDia();
@@ -38,30 +34,20 @@ app.post("/api/notify-qrcode-update", async (req, res) => {
   res.status(200).json({ ok: true });
 });
 
+// ✅ Rota de QR dinâmico
+app.get("/api/qrcode", qrcodeHandler);
+
 // Rotas principais
 app.use("/api", authRoutes);
 app.use("/api/logs", logsRoutes);
 
-// QR Code atual
-app.get("/back-end/qrcode.png", (req, res) => {
-  const filePath = path.join(process.cwd(), "qrcode.png");
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
-    res.status(404).send("QR Code ainda não gerado.");
-  }
-});
-
-// Carrega token salvo ou gera novo
-carregarTokenDoArquivo();
-
-// ✅ Agendamento diário às 07h (segunda a sexta) para gerar QR Code
+// ✅ Agendamento diário para QR Code às 07h (dias úteis)
 cron.schedule("0 7 * * 1-5", () => {
   console.log("⏰ Agendamento: gerando QR Code do dia...");
   gerarQRCodeDoDia();
 });
 
-// ✅ Agendamento diário à meia-noite para resetar status dos alunos
+// ✅ Agendamento diário para resetar status à meia-noite
 console.log("🕒 Hora local no servidor:", new Date().toLocaleString());
 cron.schedule("0 0 * * *", async () => {
   console.log("♻️ Agendamento: resetando status dos alunos...");
@@ -70,12 +56,12 @@ cron.schedule("0 0 * * *", async () => {
 
 // Inicializa servidor
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  await gerarQRCodeDoDia(); // ✅ Garante QR Code gerado na partida
 });
 
-
-// para forçar o teste do resetStudentStatus
+// Endpoint manual para reset
 app.post("/api/admin/reset-logs", async (req, res) => {
   console.log("🧼 Requisição manual para resetar logs...");
   await resetStudentStatus();

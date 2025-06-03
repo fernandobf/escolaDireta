@@ -178,7 +178,7 @@
             setTimeout(() => {
               const timestamp = Date.now();
               const newImg = new Image();
-              newImg.src = `${BASE_URL}/back-end/qrcode.png?t=${timestamp}`;
+              newImg.src = `${BASE_URL}/back-end/api/qrcode`;
 
               newImg.onload = () => {
                 img.src = newImg.src;
