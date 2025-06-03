@@ -29,7 +29,7 @@ export async function gerarQRCodeDoDia(): Promise<void> {
 
     // Define o endereço fixo do front-office
     const frontOfficeURL = "https://front-office-5ifz.onrender.com";
-    const loginUrl = `${frontOfficeURL}/login?token=${encodeURIComponent(novoToken)}`;
+    const loginUrl = `${frontOfficeURL}/qrCode?token=${encodeURIComponent(novoToken)}`;
 
     console.log("🔗 Novo QR Code aponta para:", loginUrl);
 
