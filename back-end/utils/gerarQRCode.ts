@@ -18,7 +18,7 @@ export async function gerarQRCodeDoDia(): Promise<void> {
     const secret = process.env.SECRET || "fallback_secret";
     const novoToken = jwt.sign(payload, secret);
 
-    const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.BASE_URL || "https://back-end-2vzw.onrender.com";
     const loginUrl = `${baseUrl}/login?token=${encodeURIComponent(novoToken)}`;
 
     console.log("🔗 Novo QR Code:", loginUrl);

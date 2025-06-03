@@ -11,7 +11,7 @@ export async function qrcodeHandler(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.BASE_URL || "https://back-end-2vzw.onrender.com";
   const loginUrl = `${baseUrl}/login?token=${encodeURIComponent(token)}`;
 
   try {
