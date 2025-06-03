@@ -123,9 +123,8 @@
 
     <img
       id="qrcode"
-      src="https://back-end-2vzw.onrender.com/back-end/qrcode.png"
+      src="https://back-end-2vzw.onrender.com/api/qrcode"
       alt="QR Code"
-      onload="document.getElementById('loading').style.display = 'none'; document.getElementById('qrcode').style.display = 'block';"
     />
   </div>
 
@@ -178,7 +177,7 @@
             setTimeout(() => {
               const timestamp = Date.now();
               const newImg = new Image();
-              newImg.src = `${BASE_URL}/back-end/api/qrcode`;
+              newImg.src = `${BASE_URL}/api/qrcode?ts=${timestamp}`;
 
               newImg.onload = () => {
                 img.src = newImg.src;
@@ -206,4 +205,4 @@
     conectarSSE();
   </script>
 </body>
-</html>rrr
+</html>
