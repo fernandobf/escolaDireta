@@ -26,7 +26,7 @@ function Login() {
       return;
     }
 
-    fetch(`${BASE_URL}/validate-token`, {
+    fetch(`${BASE_URL}/api/validate-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
