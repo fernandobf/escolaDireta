@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
+import { BASE_URL } from '../config';
 
 interface Aluno {
   student_id: number;
@@ -15,6 +16,7 @@ interface LogEntry {
 }
 
 function StudentList() {
+
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set());
   const [btnTxt, setBtnTxt] = useState("Solicitar Checkout");
@@ -22,7 +24,7 @@ function StudentList() {
 
   const fetchCurrentLogs = async () => {
     try {
-      const res = await fetch("https://back-end-2vzw.onrender.com/api/logs/current");
+      const res = await fetch(`${BASE_URL}/api/logs/current`);
       const data = await res.json();
 
       if (Array.isArray(data)) {
@@ -45,7 +47,7 @@ function StudentList() {
 
     fetchCurrentLogs();
 
-    const evtSource = new EventSource("https://back-end-2vzw.onrender.com/events");
+    const evtSource = new EventSource(`${BASE_URL}/events`);
     console.log("Conectado ao SSE");
 
     evtSource.onmessage = (event) => {
@@ -109,7 +111,7 @@ function StudentList() {
     };
 
     try {
-      const res = await fetch("https://back-end-2vzw.onrender.com/api/logs/start", {
+      const res = await fetch(`${BASE_URL}/api/logs/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-
-// const BACKEND_URL = "https://back-end-2vzw.onrender.com/api";
-const BACKEND_URL = "https://back-end-2vzw.onrender.com/api";
+import { BASE_URL } from '../config';
 
 function Login() {
   const [searchParams] = useSearchParams();
@@ -28,7 +26,7 @@ function Login() {
       return;
     }
 
-    fetch(`${BACKEND_URL}/validate-token`, {
+    fetch(`${BASE_URL}/validate-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -61,7 +59,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/login`, {
+      const res = await fetch(`${BASE_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

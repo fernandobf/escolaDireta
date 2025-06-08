@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { BASE_URL } from '../../config';
 
 interface CheckoutLog {
   log_id: string;
@@ -33,7 +34,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch("https://back-end-2vzw.onrender.com/api/logs/class-logs", {
+      const response = await fetch(`${BASE_URL}/api/logs/class-logs`, {
         cache: "no-store",
       });
       const data: CheckoutLog[] = await response.json();
@@ -62,9 +63,10 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   };
 
   useEffect(() => {
+
     fetchLogs(); // carregamento inicial
 
-    const evtSource = new EventSource("https://back-end-2vzw.onrender.com/events");
+    const evtSource = new EventSource(`${BASE_URL}/events`);
     console.log("Conectado ao SSE");
 
     evtSource.onmessage = (event) => {
@@ -108,7 +110,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      const response = await fetch(`https://back-end-2vzw.onrender.com/api/logs/${logId}/status`, {
+      const response = await fetch(`${BASE_URL}/api/logs/${logId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ new_status: newStatus }),
