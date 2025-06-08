@@ -22,7 +22,7 @@ export async function resetStudentStatus() {
 
       // 1. Copia os logs para logs_arquivados
       await client.query(`
-        INSERT INTO logs_arquivados (
+        INSERT INTO checkout.logs_arquivados (
           log_id,
           log_student_id,
           log_caregiver_id,
@@ -37,7 +37,7 @@ export async function resetStudentStatus() {
           log_module_id,
           log_action_id,
           log_date_time
-        FROM logs
+        FROM checkout.logs
       `);
 
       // 2. Limpa a tabela original

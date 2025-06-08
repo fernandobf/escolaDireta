@@ -14,8 +14,8 @@ export default async function loginHandler(req: Request, res: Response): Promise
     // Busca o responsável
     const caregiverResult = await pool.query(
       `SELECT caregiver_id, caregiver_name_official 
-       FROM caregivers 
-       WHERE caregiver_phone = $1 AND is_active = true`,
+      FROM checkout.caregivers 
+      WHERE caregiver_phone = $1 AND is_active = true`,
       [phone]
     );
 
@@ -29,13 +29,13 @@ export default async function loginHandler(req: Request, res: Response): Promise
     // Busca os alunos associados a esse responsável
     const studentsResult = await pool.query(
       `SELECT 
-         s.student_id,
-         s.student_name_official,
-         sp.spot_name_official
-       FROM students_caregivers sc
-       JOIN students s ON sc.student_id = s.student_id
-       JOIN spots sp ON s.spot_id = sp.spot_id
-       WHERE sc.caregiver_id = $1 AND s.is_active = true`,
+        s.student_id,
+        s.student_name_official,
+        sp.spot_name_official
+      FROM checkout.students_caregivers sc
+      JOIN checkout.students s ON sc.student_id = s.student_id
+      JOIN checkout.spots sp ON s.spot_id = sp.spot_id
+      WHERE sc.caregiver_id = $1 AND s.is_active = true`,
       [caregiver.caregiver_id]
     );
 

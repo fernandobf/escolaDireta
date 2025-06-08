@@ -5,6 +5,7 @@ export const getLogsByClassHandler = async (req: Request, res: Response): Promis
   const className = req.query.name as string | undefined;
 
   try {
+    
     let query = `
       SELECT 
         l.log_id,
@@ -14,11 +15,11 @@ export const getLogsByClassHandler = async (req: Request, res: Response): Promis
         a.action_name AS log_action_type,
         l.log_date_time AS log_timestamp,
         a.action_name AS log_status -- ← pega o status real!
-      FROM logs l
-      JOIN students s ON l.log_student_id = s.student_id
-      JOIN caregivers c ON l.log_caregiver_id = c.caregiver_id
-      JOIN spots sp ON s.spot_id = sp.spot_id
-      JOIN module_actions a ON l.log_action_id = a.action_id
+      FROM checkout.logs l
+      JOIN checkout.students s ON l.log_student_id = s.student_id
+      JOIN checkout.caregivers c ON l.log_caregiver_id = c.caregiver_id
+      JOIN checkout.spots sp ON s.spot_id = sp.spot_id
+      JOIN checkout.module_actions a ON l.log_action_id = a.action_id
     `;
 
     const params: any[] = [];

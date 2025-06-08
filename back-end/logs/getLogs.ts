@@ -3,20 +3,20 @@ import pool from "../config/db";
 
 export async function getCurrentLogs(req: Request, res: Response) {
   try {
-const result = await pool.query(`
-  SELECT DISTINCT ON (s.student_id)
-    s.student_id,
-    s.student_name_official AS student_name,
-    sp.spot_name_official AS spot_name,
-    a.action_name AS log_status,
-    l.log_date_time AS log_timestamp
-  FROM logs l
-  JOIN students s ON l.log_student_id = s.student_id
-  JOIN spots sp ON s.spot_id = sp.spot_id
-  JOIN module_actions a ON l.log_action_id = a.action_id
-  ORDER BY s.student_id, l.log_date_time DESC
-`);
 
+    const result = await pool.query(`
+      SELECT DISTINCT ON (s.student_id)
+        s.student_id,
+        s.student_name_official AS student_name,
+        sp.spot_name_official AS spot_name,
+        a.action_name AS log_status,
+        l.log_date_time AS log_timestamp
+      FROM checkout.logs l
+      JOIN checkout.students s ON l.log_student_id = s.student_id
+      JOIN checkout.spots sp ON s.spot_id = sp.spot_id
+      JOIN checkout.module_actions a ON l.log_action_id = a.action_id
+      ORDER BY s.student_id, l.log_date_time DESC
+    `);
 
     res.json(result.rows);
   } catch (error) {

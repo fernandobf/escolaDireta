@@ -7,8 +7,9 @@ export const startLog: RequestHandler = async (req, res) => {
     const { caregiver_id, students } = req.body;
 
     const moduleRes = await pool.query(
-      `SELECT module_id FROM modules WHERE LOWER(module_name_alias) = 'checkout' LIMIT 1`
+      `SELECT module_id FROM checkout.modules WHERE LOWER(module_name_alias) = 'checkout' LIMIT 1`
     );
+
     if (moduleRes.rowCount === 0) {
       res.status(500).json({ error: "Módulo 'checkout' não encontrado." });
       return;
@@ -17,9 +18,10 @@ export const startLog: RequestHandler = async (req, res) => {
     const module_id = moduleRes.rows[0].module_id;
 
     const actionRes = await pool.query(
-      `SELECT action_id FROM module_actions WHERE module_id = $1 AND LOWER(action_name) = 'solicitado' LIMIT 1`,
+      `SELECT action_id FROM checkout.module_actions WHERE module_id = $1 AND LOWER(action_name) = 'solicitado' LIMIT 1`,
       [module_id]
     );
+
     if (actionRes.rowCount === 0) {
       res.status(500).json({ error: "Ação 'solicitado' não encontrada." });
       return;
