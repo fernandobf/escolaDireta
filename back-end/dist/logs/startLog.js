@@ -23,9 +23,9 @@ const startLog = async (req, res) => {
         const action_id = actionRes.rows[0].action_id;
         const values = students.map((student_id) => `(${student_id}, ${caregiver_id}, ${module_id}, ${action_id})`).join(", ");
         await db_1.default.query(`
-      INSERT INTO logs (log_student_id, log_caregiver_id, log_module_id, log_action_id)
-      VALUES ${values}
-    `);
+            INSERT INTO checkout.logs (log_student_id, log_caregiver_id, log_module_id, log_action_id)
+            VALUES ${values}
+        `);
         const event = {
             type: "new-checkout-request",
             students,
