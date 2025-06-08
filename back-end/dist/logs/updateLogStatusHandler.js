@@ -21,7 +21,7 @@ const updateLogStatusHandler = async (req, res) => {
         return;
     }
     try {
-        const result = await db_1.default.query("UPDATE logs SET log_action_id = $1 WHERE log_id = $2", [newActionId, logId]);
+        const result = await db_1.default.query("UPDATE checkout.logs SET log_action_id = $1 WHERE log_id = $2", [newActionId, logId]);
         if (result.rowCount === 0) {
             res.status(404).json({ error: "Log não encontrado" });
             return;

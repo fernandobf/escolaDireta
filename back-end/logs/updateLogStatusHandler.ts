@@ -22,7 +22,7 @@ export const updateLogStatusHandler = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      "UPDATE logs SET log_action_id = $1 WHERE log_id = $2",
+      "UPDATE checkout.logs SET log_action_id = $1 WHERE log_id = $2",
       [newActionId, logId]
     );
 

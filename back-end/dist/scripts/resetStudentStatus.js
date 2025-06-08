@@ -21,7 +21,7 @@ async function resetStudentStatus() {
             await client.query('BEGIN');
             // 1. Copia os logs para logs_arquivados
             await client.query(`
-        INSERT INTO logs_arquivados (
+        INSERT INTO checkout.logs_arquivados (
           log_id,
           log_student_id,
           log_caregiver_id,
