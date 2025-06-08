@@ -75,3 +75,25 @@ PDM / dbml
 SELECT student_name_official
 FROM students
 WHERE client_id = 1 AND is_active = true;
+
+
+gerar novo qrcode:
+curl -X POST https://back-end-2vzw.onrender.com/api/notify-qrcode-update
+
+
+Uma.ideia: enviar sms para os pais para avisar que o aluno ja saiu da escola.
+
+
+Simule uma tabela de reajuste contratual a partir dos seguintes dados:
+- Valor cheio: [coloque aqui, ex: 550.00]
+- Percentual de reajuste ao fim de 12 meses: [ex: 20%]
+- Planos disponíveis:
+  - 12 meses → 0% de desconto
+  - 24 meses → 2,5% de desconto
+  - 36 meses → 5% de desconto
+Mostre os seguintes dados para cada plano:
+- Valor com desconto aplicado
+- Valor final após o reajuste de 12 meses (calculado sobre o valor com desconto)
+Exiba tudo em formato de tabela.
+
+
