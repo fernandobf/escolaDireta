@@ -18,7 +18,6 @@ export default async function loginHandler(req: Request, res: Response): Promise
       WHERE caregiver_phone = $1 AND is_active = true`,
       [phone]
     );
-console.log("📞 Resultado da busca do responsável:", caregiverResult.rows);
 
     if (caregiverResult.rows.length === 0) {
       res.status(404).json({ error: "Responsável não encontrado." });
@@ -36,7 +35,7 @@ console.log("📞 Resultado da busca do responsável:", caregiverResult.rows);
       FROM checkout.students_caregivers sc
       JOIN checkout.students s ON sc.student_id = s.student_id
       JOIN checkout.spots sp ON s.spot_id = sp.spot_id
-      WHERE sc.caregiver_id = 1 AND s.is_active = true`,
+      WHERE sc.caregiver_id = $1 AND s.is_active = true`,
       [caregiver.caregiver_id]
     );
 
