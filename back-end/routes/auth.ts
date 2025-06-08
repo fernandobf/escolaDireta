@@ -5,6 +5,6 @@ import validateToken from "../controllers/auth/validateToken"; // <- default imp
 const router = express.Router();
 
 router.post("/login", loginHandler);
-router.post("/validate-token", validateToken);
+router.post("/api/validate-token", validateToken);
 
 export default router;
