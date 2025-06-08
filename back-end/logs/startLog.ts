@@ -34,7 +34,7 @@ export const startLog: RequestHandler = async (req, res) => {
     ).join(", ");
 
     await pool.query(`
-      INSERT INTO logs (log_student_id, log_caregiver_id, log_module_id, log_action_id)
+      INSERT INTO checkout.logs (log_student_id, log_caregiver_id, log_module_id, log_action_id)
       VALUES ${values}
     `);
 
