@@ -16,20 +16,39 @@
       top: 0;
       right: 0;
       height: 20px;
-      background-color: #f0f0f0;
       color: #333;
-      display: none;
+      display: flex;
       align-items: center;
-      justify-content: right;
       font-size: 9px;
-      border-bottom: 1px solid #ccc;
       border-left: 1px solid #ccc;
-      border-radius: 0 0 0 4px;
       z-index: 10;
+      width: 100%;
+      justify-content: space-between;
     }
 
     header span {
-      margin: 0 10px;
+      background-color: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+      height: inherit;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+    }
+
+    header span b{
+      margin-right: 2px;
+    }
+
+    header span:first-child {
+      border-right: 1px solid #ccc;
+      border-radius: 0 0 4px 0;
+      justify-content: start;
+    }
+
+    header span:last-child {
+      border-left: 1px solid #ccc;
+      border-radius: 0 0 0 4px;
+      justify-content: end;
     }
 
     #main {
@@ -109,7 +128,8 @@
 <body>
 
   <header id="header">
-    <span id="serialInfo">Serial number: XXX</span>
+    <span id="lastUpdate"><b>Última atualização:</b> N/D</span>
+    <span id="serialInfo"></span>
   </header>
 
   <div id="main">
@@ -133,28 +153,31 @@
   </footer>
 
   <script>
+
     const urlParams = new URLSearchParams(window.location.search);
-    const serial = urlParams.get('serialNumber');
+    const serialElem = urlParams.get('serialNumber');
+    const serialInfo = document.getElementById('serialInfo');
+    let lastUpdate;
 
-    if (serial) {
-      const header = document.getElementById('header');
-      const serialInfo = document.getElementById('serialInfo');
-      serialInfo.textContent = `Serial number: ${serial}`;
-      header.style.display = 'flex';
+    if (serialElem) {
+      serialInfo.innerHTML = `<b>Serial number:</b> ${serialElem}`;
 
-      const mensagens = {
-        "01010102": "ATENÇÃO: os alunos da turma BOMBOCAS só chegarão do passeio aproximadamente às 18h00min.",
-      };
-
-      const mensagem = mensagens[serial];
-      if (mensagem) {
-        const warningDiv = document.querySelector('.warning');
-        warningDiv.textContent = mensagem;
-        warningDiv.style.color = '#C62828';
-        warningDiv.style.fontWeight = 'bold';
-        warningDiv.style.marginBottom = '10px';
-        warningDiv.style.textAlign = 'center';
-      }
+    fetch('./mensagens.json')
+      .then(res => res.json())
+      .then(mensagens => {
+        const mensagem = mensagens[serialElem];
+        if (mensagem) {
+          const warningDiv = document.querySelector('.warning');
+          warningDiv.textContent = mensagem;
+          warningDiv.style.color = '#C62828';
+          warningDiv.style.fontWeight = 'bold';
+          warningDiv.style.marginBottom = '10px';
+          warningDiv.style.textAlign = 'center';
+        }
+      })
+      .catch(err => console.warn('Erro ao carregar mensagens.json:', err));
+    }else{
+      serialInfo.remove();
     }
 
     const BASE_URL = "https://back-end-2vzw.onrender.com";
@@ -165,6 +188,20 @@
       evtSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          lastUpdate = data.timestamp;
+
+          if (lastUpdate) {
+            const lastUpdateInfo = document.getElementById('lastUpdate');
+            const date = new Date(lastUpdate);
+            const dia = String(date.getDate()).padStart(2, '0');
+            const mes = String(date.getMonth() + 1).padStart(2, '0'); // meses começam em 0
+            const ano = date.getFullYear();
+            const hora = String(date.getHours()).padStart(2, '0');
+            const minutos = String(date.getMinutes()).padStart(2, '0');
+
+            lastUpdateInfo.innerHTML = `<b>Última atualização:</b> ${dia}/${mes}/${ano} às ${hora}h${minutos}min`;
+          }
+
           if (data.type === "qrcode-updated") {
             console.log("📡 Novo QR Code detectado via SSE");
 
