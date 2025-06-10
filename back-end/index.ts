@@ -48,11 +48,14 @@ cron.schedule("0 7 * * 1-5", () => {
 });
 
 // ✅ Agendamento diário para resetar status à meia-noite
-console.log("🕒 Hora local no servidor:", new Date().toLocaleString());
-cron.schedule("0 0 * * *", async () => {
+// cron.schedule("0 0 * * *", async () => {
+cron.schedule("* * * * *", async () => {
   console.log("♻️ Agendamento: resetando status dos alunos...");
   await resetStudentStatus();
+}, {
+  timezone: "Europe/Lisbon", // ou outro conforme necessário
 });
+
 
 // Inicializa servidor
 const PORT = process.env.PORT || 3000;

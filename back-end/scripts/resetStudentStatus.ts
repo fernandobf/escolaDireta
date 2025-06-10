@@ -41,7 +41,7 @@ export async function resetStudentStatus() {
       `);
 
       // 2. Limpa a tabela original
-      await client.query("DELETE FROM logs");
+      await client.query("DELETE FROM checkout.logs");
 
       await client.query('COMMIT');
 
