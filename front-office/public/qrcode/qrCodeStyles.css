@@ -131,6 +131,7 @@ footer {
   border: solid 1px #C62828;
   padding: 10px;
   border-radius: 8px;
+  display: none;
     
   animation: warning-effect 1s infinite ease-in-out;
 }

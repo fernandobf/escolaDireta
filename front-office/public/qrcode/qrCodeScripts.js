@@ -15,15 +15,16 @@ if (serialElem) {
 
         if (mensagem) {
             warningDiv.textContent = mensagem;
+            warningDiv.style.display = 'block';
             // warningDiv.classList.add('warning'); // adiciona a classe com os estilos
         }else{
-            warningDiv.remove();
+              warningDiv.style.display = 'none';
         }
     })
     .catch(err => console.warn('Erro ao carregar mensagens.json:', err));
 }else{
     serialInfo.remove();
-    warningDiv.remove();
+    warningDiv.style.display = 'none';
 }
 
 const BASE_URL = "https://back-end-2vzw.onrender.com";
