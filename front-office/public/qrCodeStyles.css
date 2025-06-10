@@ -1,0 +1,124 @@
+body {
+    margin: 0;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 20px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    font-size: 9px;
+    border-left: 1px solid #ccc;
+    z-index: 10;
+    width: 100%;
+    justify-content: space-between;
+}
+
+header span {
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #ccc;
+    height: inherit;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+}
+
+header span b{
+    margin-right: 2px;
+}
+
+header span:first-child {
+    border-right: 1px solid #ccc;
+    border-radius: 0 0 4px 0;
+    justify-content: start;
+}
+
+header span:last-child {
+    border-left: 1px solid #ccc;
+    border-radius: 0 0 0 4px;
+    justify-content: end;
+}
+
+#main {
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 100px);
+    padding-top: 20px;
+    flex-direction: column;
+}
+
+h1 {
+    text-align: center;
+    line-height: 45px;
+    margin-top: 10px;
+}
+
+#loading {
+    color: #000;
+    font-size: 1.5rem;
+    font-family: monospace;
+    width: 500px;
+    height: 350px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+@keyframes dots {
+    0%   { content: "."; }
+    33%  { content: ".."; }
+    66%  { content: "..."; }
+    100% { content: "."; }
+}
+
+#loading p:first-of-type {
+    width: 90px;
+    margin: 0 auto 20px;
+}
+
+#loading p:first-of-type:after {
+    content: ".";
+    animation: dots 1.5s infinite steps(1, end);
+}
+
+#loading small {
+    display: block;
+    font-size: 0.9rem;
+}
+
+img {
+    width: 100%;
+    height: auto;
+    max-width: 350px;
+    max-height: 350px;
+    display: none;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background-color: #f0f0f0;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9rem;
+    border-top: 1px solid #ccc;
+}
+
+.warning {
+  color: #C62828;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
