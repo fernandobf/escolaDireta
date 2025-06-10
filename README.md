@@ -97,3 +97,18 @@ Mostre os seguintes dados para cada plano:
 Exiba tudo em formato de tabela.
 
 
+
+Schemas
+├── core
+│   └── dados do cliente, plano etc
+├── common
+│   └── ... (caregives, estudents...)
+├── checkout
+│   ├── spots
+│   ├── students
+│   ├── logs
+│   ├── qrcodes
+│   └── ...
+
+
+

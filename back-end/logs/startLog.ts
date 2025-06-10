@@ -7,7 +7,7 @@ export const startLog: RequestHandler = async (req, res) => {
     const { caregiver_id, students } = req.body;
 
     const moduleRes = await pool.query(
-      `SELECT module_id FROM checkout.modules WHERE LOWER(module_name_alias) = 'checkout' LIMIT 1`
+      `SELECT module_id FROM core.modules WHERE LOWER(module_name_alias) = 'checkout' LIMIT 1`
     );
 
     if (moduleRes.rowCount === 0) {
