@@ -8,7 +8,7 @@ let lastUpdate;
 if (serialElem) {
     serialInfo.innerHTML = `<b>Serial number:</b> ${serialElem}`;
 
-    fetch('./qrCodeMensagens.json')
+    fetch('/qrcode/qrCodeMensagens.json')
     .then(res => res.json())
     .then(mensagens => {
         const mensagem = mensagens[serialElem];
