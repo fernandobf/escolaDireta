@@ -14,6 +14,7 @@ export const sseHandler = (req: Request, res: Response) => {
 
   // 🔁 Ping a cada 25s para manter conexão viva (evita timeout na Render)
   const keepAlive = setInterval(() => {
+    console.log("🔄 Enviando ping para manter conexão SSE viva");
     res.write(':\n\n'); // comentário vazio (válido no protocolo SSE)
   }, 25000);
 
