@@ -89,7 +89,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
     evtSource.onerror = (err) => {
       console.warn("[SSE] Conexão SSE falhou:", err);
-      evtSource.close();
+      // evtSource.close();
     };
 
     return () => {
