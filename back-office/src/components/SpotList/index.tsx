@@ -4,13 +4,13 @@ import { BASE_URL } from '../../config';
 
 interface CheckoutLog {
   log_id: string;
+  log_student_id: number;
   log_student_name: string;
   log_student_tutor_name: string;
   log_student_class: string;
   log_status: string;
   log_action_type: string;
   log_timestamp: string;
-  log_student_id?: number; // Caso tenha esse campo
 }
 
 interface LiveCheckoutsProps {
@@ -79,10 +79,8 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
         setOpenOccurrencesCount(openOccurrences.length);
 
         const turmaIds = sorted
-          .filter((log) =>
-            log.log_student_class.toLowerCase() === currentClassParam
-          )
-          .map((log) => log.log_student_id ?? 0);
+          .filter((log) => log.log_student_class.toLowerCase() === currentClassParam)
+          .map((log) => log.log_student_id);
         classStudentIdsRef.current = new Set(turmaIds);
       } else {
         setLogs([]);
