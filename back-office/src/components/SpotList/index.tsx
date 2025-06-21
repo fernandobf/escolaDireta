@@ -26,13 +26,22 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   const [searchParams] = useSearchParams();
   const currentClassParam = searchParams.get("name")?.toLowerCase() || "";
   const [logs, setLogs] = useState<CheckoutLog[]>([]);
-  const [filterByCurrentClass, setFilterByCurrentClass] = useState(false);
   const [loadingLogId, setLoadingLogId] = useState<string | null>(null);
+  const [filterByCurrentClass, setFilterByCurrentClass] = useState(() => {
+    const saved = localStorage.getItem(`live-checkouts-filter:${currentClassParam}`);
+    return saved === "true";
+  });
+
   const prevLogIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setCurrentClass(currentClassParam);
   }, [currentClassParam, setCurrentClass]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`live-checkouts-filter:${currentClassParam}`);
+    setFilterByCurrentClass(saved === "true");
+  }, [currentClassParam]);
 
   const fetchLogs = async () => {
     try {
@@ -151,7 +160,16 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
       <div className="mb-4">
         <button
-          onClick={() => setFilterByCurrentClass((prev) => !prev)}
+          onClick={() => {
+            setFilterByCurrentClass((prev) => {
+              const updated = !prev;
+              localStorage.setItem(
+                `live-checkouts-filter:${currentClassParam}`,
+                String(updated)
+              );
+              return updated;
+            });
+          }}
           className={`btn px-4 py-2 rounded transition-colors duration-300 ${
             filterByCurrentClass
               ? "bg-yellow-500 text-white hover:bg-yellow-600"
@@ -242,7 +260,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
         </table>
       )}
 
-      {/* Estilos para animação */}
+      {/* Estilo para animação de nova linha */}
       <style>
         {`
           @keyframes fadeIn {
