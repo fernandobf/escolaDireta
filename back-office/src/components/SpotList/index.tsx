@@ -232,7 +232,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
                         </button>
                       )
                     ) : (
-                      <span className="text-gray-400 italic">Aguardando turma</span>
+                      <span className="text-gray-400 italic">-</span>
                     )}
                   </td>
                 </tr>
