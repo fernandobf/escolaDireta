@@ -102,9 +102,19 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
       if (tiposQueAtualizam.includes(data.type)) {
         if (data.type === "new-checkout-request") {
+
+          console.log("📩 Evento recebido:", data);
+
           const requestedStudentIds: number[] = data.students || [];
           const turmaIds = classStudentIdsRef.current;
+
+  console.log("🎓 IDs da turma atual:", [...turmaIds]);
+  console.log("🔎 Solicitados:", requestedStudentIds);
+
+
           const hasMatch = requestedStudentIds.some((id) => turmaIds.has(id));
+
+  console.log("✅ Algum aluno da turma foi solicitado?", hasMatch);
 
           if (hasMatch) {
             if (soundEnabled && audioRef.current) {

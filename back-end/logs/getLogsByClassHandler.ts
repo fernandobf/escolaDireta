@@ -9,6 +9,7 @@ export const getLogsByClassHandler = async (req: Request, res: Response): Promis
     let query = `
       SELECT 
         l.log_id,
+        s.student_id AS log_student_id,
         s.student_name_official AS log_student_name,
         c.caregiver_name_official AS log_student_tutor_name,
         sp.spot_name_official AS log_student_class,
