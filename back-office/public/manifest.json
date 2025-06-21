@@ -1,8 +1,8 @@
 {
   "name": "ESCOLADIRETA - Spot",
   "short_name": "Spot",
-"start_url": "/sala?name=bombocas",
-"display": "standalone",
+  "start_url": "/sala",
+  "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#003d73",
   "orientation": "portrait",

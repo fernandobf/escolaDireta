@@ -25,21 +25,39 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   setCurrentClass,
 }) => {
   const [searchParams] = useSearchParams();
-  const currentClassParam = searchParams.get("name")?.toLowerCase() || "";
   const [logs, setLogs] = useState<CheckoutLog[]>([]);
   const [loadingLogId, setLoadingLogId] = useState<string | null>(null);
-  const [filterByCurrentClass, setFilterByCurrentClass] = useState(() => {
-    const saved = localStorage.getItem(`live-checkouts-filter:${currentClassParam}`);
-    return saved === "true";
-  });
+  const [filterByCurrentClass, setFilterByCurrentClass] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevLogIdsRef = useRef<Set<string>>(new Set());
   const classStudentIdsRef = useRef<Set<number>>(new Set());
 
+  const currentClassParam = searchParams.get("name")?.toLowerCase() || "";
+
+  // Redirecionamento automático com base na última turma acessada
+  useEffect(() => {
+    const currentUrl = new URL(window.location.href);
+    const turmaParam = currentUrl.searchParams.get("name");
+
+    if (turmaParam) {
+      localStorage.setItem("last-turma", turmaParam);
+    } else {
+      const saved = localStorage.getItem("last-turma");
+      if (saved) {
+        window.location.replace(`/sala?name=${saved}`);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     setCurrentClass(currentClassParam);
   }, [currentClassParam, setCurrentClass]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`live-checkouts-filter:${currentClassParam}`);
+    setFilterByCurrentClass(saved === "true");
+  }, [currentClassParam]);
 
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
