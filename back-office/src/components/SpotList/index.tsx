@@ -10,6 +10,7 @@ interface CheckoutLog {
   log_status: string;
   log_action_type: string;
   log_timestamp: string;
+  log_student_id?: number; // Caso tenha esse campo
 }
 
 interface LiveCheckoutsProps {
@@ -34,6 +35,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevLogIdsRef = useRef<Set<string>>(new Set());
+  const classStudentIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     setCurrentClass(currentClassParam);
@@ -75,6 +77,13 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
           (log) => log.log_status !== FINAL_STATUS
         );
         setOpenOccurrencesCount(openOccurrences.length);
+
+        const turmaIds = sorted
+          .filter((log) =>
+            log.log_student_class.toLowerCase() === currentClassParam
+          )
+          .map((log) => log.log_student_id ?? 0);
+        classStudentIdsRef.current = new Set(turmaIds);
       } else {
         setLogs([]);
         setOpenOccurrencesCount(0);
@@ -95,15 +104,21 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
       if (tiposQueAtualizam.includes(data.type)) {
         if (data.type === "new-checkout-request") {
-          if (soundEnabled && audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch((err) => console.warn("🔇 Falha ao tocar som:", err));
-          }
-          if (Notification.permission === "granted") {
-            new Notification("🚸 Nova solicitação de retirada!", {
-              body: `O aluno ${data.studentName || ""} foi solicitado.`,
-              icon: "/icon-192.png",
-            });
+          const requestedStudentIds: number[] = data.students || [];
+          const turmaIds = classStudentIdsRef.current;
+          const hasMatch = requestedStudentIds.some((id) => turmaIds.has(id));
+
+          if (hasMatch) {
+            if (soundEnabled && audioRef.current) {
+              audioRef.current.currentTime = 0;
+              audioRef.current.play().catch((err) => console.warn("🔇 Falha ao tocar som:", err));
+            }
+            if (Notification.permission === "granted") {
+              new Notification("🚸 Nova solicitação de retirada!", {
+                body: `Nova solicitação para sua turma.`,
+                icon: "/icon-192.png",
+              });
+            }
           }
         }
         fetchLogs();
