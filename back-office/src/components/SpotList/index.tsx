@@ -201,34 +201,38 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
                     {formatDate(log.log_timestamp)}
                   </td>
                   <td className="border px-2 py-1">
-                    {log.log_status === "Solicitado" ? (
-                      <button
-                        className="btn btn-primary flex items-center gap-2"
-                        onClick={() =>
-                          handleStatusUpdate(
-                            log.log_id,
-                            "Em progresso",
-                            log.log_student_name
-                          )
-                        }
-                        disabled={loadingLogId === log.log_id}
-                      >
-                        {loadingLogId === log.log_id ? "⏳" : "Aceitar solicitação"}
-                      </button>
+                    {isCurrentClass ? (
+                      log.log_status === "Solicitado" ? (
+                        <button
+                          className="btn btn-primary flex items-center gap-2"
+                          onClick={() =>
+                            handleStatusUpdate(
+                              log.log_id,
+                              "Em progresso",
+                              log.log_student_name
+                            )
+                          }
+                          disabled={loadingLogId === log.log_id}
+                        >
+                          {loadingLogId === log.log_id ? "⏳" : "Aceitar solicitação"}
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-success flex items-center gap-2"
+                          onClick={() =>
+                            handleStatusUpdate(
+                              log.log_id,
+                              "Finalizado",
+                              log.log_student_name
+                            )
+                          }
+                          disabled={loadingLogId === log.log_id}
+                        >
+                          {loadingLogId === log.log_id ? "⏳" : "Concluir"}
+                        </button>
+                      )
                     ) : (
-                      <button
-                        className="btn btn-success flex items-center gap-2"
-                        onClick={() =>
-                          handleStatusUpdate(
-                            log.log_id,
-                            "Finalizado",
-                            log.log_student_name
-                          )
-                        }
-                        disabled={loadingLogId === log.log_id}
-                      >
-                        {loadingLogId === log.log_id ? "⏳" : "Concluir"}
-                      </button>
+                      <span className="text-gray-400 italic">Aguardando turma</span>
                     )}
                   </td>
                 </tr>
