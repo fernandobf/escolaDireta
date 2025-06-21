@@ -26,6 +26,8 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   const [searchParams] = useSearchParams();
   const currentClassParam = searchParams.get("name")?.toLowerCase() || "";
   const [logs, setLogs] = useState<CheckoutLog[]>([]);
+  const [filterByCurrentClass, setFilterByCurrentClass] = useState(false);
+  const [loadingLogId, setLoadingLogId] = useState<string | null>(null);
   const prevLogIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -45,7 +47,13 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
             new Date(b.log_timestamp).getTime() - new Date(a.log_timestamp).getTime()
         );
 
-        prevLogIdsRef.current = new Set(sorted.map((log) => log.log_id));
+        const newIds = new Set(sorted.map((log) => log.log_id));
+        const prevIds = prevLogIdsRef.current;
+        sorted.forEach((log) => {
+          (log as any).isNew = !prevIds.has(log.log_id);
+        });
+
+        prevLogIdsRef.current = newIds;
         setLogs(sorted);
 
         const openOccurrences = sorted.filter(
@@ -63,33 +71,23 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   };
 
   useEffect(() => {
-
-    fetchLogs(); // carregamento inicial
+    fetchLogs();
 
     const evtSource = new EventSource(`${BASE_URL}/events`);
-    console.log("Conectado ao SSE");
-
     evtSource.onmessage = (event) => {
-      console.log("[SSE] Evento bruto recebido:", event.data);
-
       const data = JSON.parse(event.data);
-
       const tiposQueAtualizam = [
         "status-update",
         "new-checkout-request",
         "logs-resetados",
       ];
-
       if (tiposQueAtualizam.includes(data.type)) {
-        console.log("[SSE] Evento recebido:", data);
-        console.log("[SSE] Evento interpretado:", data); // 👈 ADICIONADO
         fetchLogs();
       }
     };
 
     evtSource.onerror = (err) => {
       console.warn("[SSE] Conexão SSE falhou:", err);
-      // evtSource.close();
     };
 
     return () => {
@@ -110,6 +108,8 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     if (!window.confirm(confirmMsg)) return;
 
     try {
+      setLoadingLogId(logId);
+
       const response = await fetch(`${BASE_URL}/api/logs/${logId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -122,6 +122,8 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
       }
     } catch (error) {
       console.error("Erro na requisição:", error);
+    } finally {
+      setLoadingLogId(null);
     }
   };
 
@@ -133,12 +135,35 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     return `${day}, às ${hours}h${minutes}min`;
   };
 
-  const activeLogs = logs.filter((log) => log.log_status !== FINAL_STATUS);
+  const activeLogs = logs
+    .filter((log) => log.log_status !== FINAL_STATUS)
+    .filter((log) =>
+      filterByCurrentClass
+        ? log.log_student_class.toLowerCase() === currentClassParam
+        : true
+    );
 
   return (
     <div className="content internal">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Checkouts em andamento</h2>
+      </div>
+
+      <div className="mb-4">
+        <button
+          onClick={() => setFilterByCurrentClass((prev) => !prev)}
+          className={`btn px-4 py-2 rounded transition-colors duration-300 ${
+            filterByCurrentClass
+              ? "bg-yellow-500 text-white hover:bg-yellow-600"
+              : "bg-white border border-gray-400 hover:bg-gray-100"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            {filterByCurrentClass
+              ? "🔓 Ver todos os checkouts"
+              : `🔒 Filtrar: ${currentClassParam.toUpperCase()}`}
+          </span>
+        </button>
       </div>
 
       {activeLogs.length === 0 ? (
@@ -155,38 +180,76 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
             </tr>
           </thead>
           <tbody>
-            {activeLogs.map((log) => (
-              <tr key={log.log_id} className="bg-yellow-200">
-                <td className="border px-2 py-1">{log.log_student_name}</td>
-                <td className="border px-2 py-1">{log.log_student_tutor_name}</td>
-                <td className="border px-2 py-1">{log.log_student_class.toUpperCase()}</td>
-                <td className="border px-2 py-1">{formatDate(log.log_timestamp)}</td>
-                <td className="border px-2 py-1">
-                  {log.log_status === "Solicitado" ? (
-                    <button
-                      className="btn btn-primary"
-                      onClick={() =>
-                        handleStatusUpdate(log.log_id, "Em progresso", log.log_student_name)
-                      }
-                    >
-                      Aceitar solicitação
-                    </button>
-                  ) : (
-                    <button
-                      className="btn btn-success"
-                      onClick={() =>
-                        handleStatusUpdate(log.log_id, "Finalizado", log.log_student_name)
-                      }
-                    >
-                      Concluir
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {activeLogs.map((log) => {
+              const isCurrentClass =
+                log.log_student_class.toLowerCase() === currentClassParam;
+              const isNew = (log as any).isNew;
+
+              return (
+                <tr
+                  key={log.log_id}
+                  className={`transition-all duration-500 ${
+                    isCurrentClass ? "bg-yellow-200" : ""
+                  } ${isNew ? "animate-fadeIn" : ""}`}
+                >
+                  <td className="border px-2 py-1">{log.log_student_name}</td>
+                  <td className="border px-2 py-1">{log.log_student_tutor_name}</td>
+                  <td className="border px-2 py-1">
+                    {log.log_student_class.toUpperCase()}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {formatDate(log.log_timestamp)}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {log.log_status === "Solicitado" ? (
+                      <button
+                        className="btn btn-primary flex items-center gap-2"
+                        onClick={() =>
+                          handleStatusUpdate(
+                            log.log_id,
+                            "Em progresso",
+                            log.log_student_name
+                          )
+                        }
+                        disabled={loadingLogId === log.log_id}
+                      >
+                        {loadingLogId === log.log_id ? "⏳" : "Aceitar solicitação"}
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-success flex items-center gap-2"
+                        onClick={() =>
+                          handleStatusUpdate(
+                            log.log_id,
+                            "Finalizado",
+                            log.log_student_name
+                          )
+                        }
+                        disabled={loadingLogId === log.log_id}
+                      >
+                        {loadingLogId === log.log_id ? "⏳" : "Concluir"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
+
+      {/* Estilos para animação */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.5s ease-in-out;
+          }
+        `}
+      </style>
     </div>
   );
 };
