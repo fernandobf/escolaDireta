@@ -172,7 +172,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
                             handleStatusUpdate(log.log_id, "Em progresso", log.log_student_name)
                           }
                         >
-                          Aceitar solicitação
+                          Aceitar / Iniciar
                         </button>
                       ) : (
                         <button
