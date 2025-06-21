@@ -28,6 +28,11 @@ table{
     padding: 5px 10px;
   }
 
+  table tr td:last-of-type{
+    text-align: right;
+  }
+
+
 
 a {
   font-weight: 500;
@@ -58,6 +63,7 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  width: 172px;
 }
 button:hover {
   border-color: #646cff;
