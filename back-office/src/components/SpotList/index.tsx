@@ -31,7 +31,8 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     const saved = localStorage.getItem(`live-checkouts-filter:${currentClassParam}`);
     return saved === "true";
   });
-
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevLogIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -43,6 +44,12 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     setFilterByCurrentClass(saved === "true");
   }, [currentClassParam]);
 
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
   const fetchLogs = async () => {
     try {
       const response = await fetch(`${BASE_URL}/api/logs/class-logs`, {
@@ -52,8 +59,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
       if (Array.isArray(data)) {
         const sorted = data.sort(
-          (a, b) =>
-            new Date(b.log_timestamp).getTime() - new Date(a.log_timestamp).getTime()
+          (a, b) => new Date(b.log_timestamp).getTime() - new Date(a.log_timestamp).getTime()
         );
 
         const newIds = new Set(sorted.map((log) => log.log_id));
@@ -85,12 +91,21 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     const evtSource = new EventSource(`${BASE_URL}/events`);
     evtSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      const tiposQueAtualizam = [
-        "status-update",
-        "new-checkout-request",
-        "logs-resetados",
-      ];
+      const tiposQueAtualizam = ["status-update", "new-checkout-request", "logs-resetados"];
+
       if (tiposQueAtualizam.includes(data.type)) {
+        if (data.type === "new-checkout-request") {
+          if (soundEnabled && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch((err) => console.warn("🔇 Falha ao tocar som:", err));
+          }
+          if (Notification.permission === "granted") {
+            new Notification("🚸 Nova solicitação de retirada!", {
+              body: `O aluno ${data.studentName || ""} foi solicitado.`,
+              icon: "/icon-192.png",
+            });
+          }
+        }
         fetchLogs();
       }
     };
@@ -102,7 +117,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
     return () => {
       evtSource.close();
     };
-  }, [currentClassParam]);
+  }, [currentClassParam, soundEnabled]);
 
   const handleStatusUpdate = async (
     logId: string,
@@ -158,6 +173,21 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
         <h2 className="text-xl font-bold">Checkouts em andamento</h2>
       </div>
 
+      <div className="mb-2">
+        {!soundEnabled && (
+          <button
+            className="btn btn-sm bg-blue-500 text-white rounded px-3 py-1"
+            onClick={() => {
+              audioRef.current = new Audio("/beep.mp3");
+              audioRef.current.load();
+              setSoundEnabled(true);
+            }}
+          >
+            🔊 Ativar som
+          </button>
+        )}
+      </div>
+
       <div className="mb-4">
         <button
           onClick={() => {
@@ -189,7 +219,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
       ) : (
         <table className="w-full border-collapse border border-gray-300">
           <thead>
-            <tr className="bg-gray-200">
+            <tr className="bg-gray-200 border-b-2 border-gray-300">
               <th className="border px-2 py-1">Nome</th>
               <th className="border px-2 py-1">Responsável</th>
               <th className="border px-2 py-1">Turma</th>
@@ -232,7 +262,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
                           }
                           disabled={loadingLogId === log.log_id}
                         >
-                          {loadingLogId === log.log_id ? "⏳" : "Aceitar solicitação"}
+                          {loadingLogId === log.log_id ? "⏳" : "Aceitar / Iniciar"}
                         </button>
                       ) : (
                         <button
@@ -260,7 +290,6 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
         </table>
       )}
 
-      {/* Estilo para animação de nova linha */}
       <style>
         {`
           @keyframes fadeIn {
