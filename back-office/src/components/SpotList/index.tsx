@@ -42,11 +42,6 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
   }, [currentClassParam, setCurrentClass]);
 
   useEffect(() => {
-    const saved = localStorage.getItem(`live-checkouts-filter:${currentClassParam}`);
-    setFilterByCurrentClass(saved === "true");
-  }, [currentClassParam]);
-
-  useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
@@ -54,9 +49,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/api/logs/class-logs`, {
-        cache: "no-store",
-      });
+      const response = await fetch(`${BASE_URL}/api/logs/class-logs`, { cache: "no-store" });
       const data: CheckoutLog[] = await response.json();
 
       if (Array.isArray(data)) {
@@ -73,9 +66,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
         prevLogIdsRef.current = newIds;
         setLogs(sorted);
 
-        const openOccurrences = sorted.filter(
-          (log) => log.log_status !== FINAL_STATUS
-        );
+        const openOccurrences = sorted.filter((log) => log.log_status !== FINAL_STATUS);
         setOpenOccurrencesCount(openOccurrences.length);
 
         const turmaIds = sorted
@@ -102,40 +93,32 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
       if (tiposQueAtualizam.includes(data.type)) {
         if (data.type === "new-checkout-request") {
-
-          console.log("📩 Evento recebido:", data);
-
           const requestedStudentIds: number[] = data.students || [];
-          const turmaIds = classStudentIdsRef.current;
 
-  console.log("🎓 IDs da turma atual:", [...turmaIds]);
-  console.log("🔎 Solicitados:", requestedStudentIds);
+          fetchLogs().then(() => {
+            const turmaIds = classStudentIdsRef.current;
+            const hasMatch = requestedStudentIds.some((id) => turmaIds.has(id));
 
-
-          const hasMatch = requestedStudentIds.some((id) => turmaIds.has(id));
-
-  console.log("✅ Algum aluno da turma foi solicitado?", hasMatch);
-
-          if (hasMatch) {
-            if (soundEnabled && audioRef.current) {
-              audioRef.current.currentTime = 0;
-              audioRef.current.play().catch((err) => console.warn("🔇 Falha ao tocar som:", err));
+            if (hasMatch) {
+              if (soundEnabled && audioRef.current) {
+                audioRef.current.currentTime = 0;
+                audioRef.current.play().catch((err) => console.warn("🔇 Falha ao tocar som:", err));
+              }
+              if (Notification.permission === "granted") {
+                new Notification("🚸 Nova solicitação de retirada!", {
+                  body: `Nova solicitação para sua turma.`,
+                  icon: "/icon-192.png",
+                });
+              }
             }
-            if (Notification.permission === "granted") {
-              new Notification("🚸 Nova solicitação de retirada!", {
-                body: `Nova solicitação para sua turma.`,
-                icon: "/icon-192.png",
-              });
-            }
-          }
+          });
+        } else {
+          fetchLogs();
         }
-        fetchLogs();
       }
     };
 
-    evtSource.onerror = (err) => {
-      console.warn("[SSE] Conexão SSE falhou:", err);
-    };
+    evtSource.onerror = (err) => console.warn("[SSE] Conexão SSE falhou:", err);
 
     return () => {
       evtSource.close();
@@ -156,7 +139,6 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
 
     try {
       setLoadingLogId(logId);
-
       const response = await fetch(`${BASE_URL}/api/logs/${logId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -216,10 +198,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
           onClick={() => {
             setFilterByCurrentClass((prev) => {
               const updated = !prev;
-              localStorage.setItem(
-                `live-checkouts-filter:${currentClassParam}`,
-                String(updated)
-              );
+              localStorage.setItem(`live-checkouts-filter:${currentClassParam}`, String(updated));
               return updated;
             });
           }}
@@ -252,8 +231,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
           </thead>
           <tbody>
             {activeLogs.map((log) => {
-              const isCurrentClass =
-                log.log_student_class.toLowerCase() === currentClassParam;
+              const isCurrentClass = log.log_student_class.toLowerCase() === currentClassParam;
               const isNew = (log as any).isNew;
 
               return (
@@ -265,23 +243,15 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
                 >
                   <td className="border px-2 py-1">{log.log_student_name}</td>
                   <td className="border px-2 py-1">{log.log_student_tutor_name}</td>
-                  <td className="border px-2 py-1">
-                    {log.log_student_class.toUpperCase()}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {formatDate(log.log_timestamp)}
-                  </td>
+                  <td className="border px-2 py-1">{log.log_student_class.toUpperCase()}</td>
+                  <td className="border px-2 py-1">{formatDate(log.log_timestamp)}</td>
                   <td className="border px-2 py-1">
                     {isCurrentClass ? (
                       log.log_status === "Solicitado" ? (
                         <button
                           className="btn btn-primary flex items-center gap-2"
                           onClick={() =>
-                            handleStatusUpdate(
-                              log.log_id,
-                              "Em progresso",
-                              log.log_student_name
-                            )
+                            handleStatusUpdate(log.log_id, "Em progresso", log.log_student_name)
                           }
                           disabled={loadingLogId === log.log_id}
                         >
@@ -291,11 +261,7 @@ const LiveCheckouts: React.FC<LiveCheckoutsProps> = ({
                         <button
                           className="btn btn-success flex items-center gap-2"
                           onClick={() =>
-                            handleStatusUpdate(
-                              log.log_id,
-                              "Finalizado",
-                              log.log_student_name
-                            )
+                            handleStatusUpdate(log.log_id, "Finalizado", log.log_student_name)
                           }
                           disabled={loadingLogId === log.log_id}
                         >
